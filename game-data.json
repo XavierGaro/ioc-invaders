@@ -25,6 +25,18 @@
       "path": "assets/images/alien_sprite_a.png"
     },
     {
+      "id": "alien_b",
+      "path": "assets/images/alien_sprite_b.png"
+    },
+    {
+      "id": "alien_c",
+      "path": "assets/images/alien_sprite_c.png"
+    },
+    {
+      "id": "alien_d",
+      "path": "assets/images/alien_sprite_d.png"
+    },
+    {
       "id": "bullet_player",
       "path": "assets/images/blast.png"
     },
