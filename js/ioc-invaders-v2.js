@@ -197,14 +197,99 @@ var IOC_INVADERS = function (config) {
 
         },
 
+        shotConstructor = function () {
+            var that = {},
+
+            // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
+                updateSprite = function () {
+                    that.sprite.position = that.position;
+                    that.sprite.update();
+                },
+
+                render = function () {
+                    that.sprite.render()
+                },
+
+                errorMessage = function () { //TODO: Reactivar
+                    //console.error("Error, aquesta funció s'ha de passar a les dades del mètode spawn");
+                },
+
+                move = errorMessage;
+
+
+            that.alive = false;
+
+            that.spawn = function (data) {
+                that.isColliding = false;
+                that.alive = true;
+
+                that.type = data.type;
+                that.position = data.position;
+                that.sprite = data.sprite;
+                //that.shot = data.shot; // TODO sound, ha de reproduir-se aqui mateix!
+                //data.shot.get()
+
+                that.speed = data.speed;
+
+                // Dades i Funcions especifiques de cada tipus de enemic
+                that.extra = data.extra || {};
+                move = data.move.bind(that);
+
+                return that;
+            };
+
+            that.clear = function () {
+                that.isColliding = false;
+                that.alive = false;
+
+                that.type = null;
+                that.position = {x: 0, y: 0};
+                that.sprite = null;
+
+                that.speed = {x: 0, y: 0};
+
+                // Dades i Funcions especifiques de cada tipus de enemic
+                that.extra = null;
+                move = errorMessage;
+
+            };
+
+            /**
+             * TODO: Aquesta funció es practicament identica a la de spaceshipConstructor.
+             *
+             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
+             */
+            that.update = function () {
+
+                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
+                if (that.isColliding) {
+                    return true;
+                }
+
+                updateSprite();
+
+                move();
+
+                // Sa ha sortit de la pantalla s'elimina. Deixem 1 pantalla de marge per poder fer el desplegament fora de la pantalla
+                if (this.position.x >= gameCanvas.width * 2
+                    || this.position.x <= -gameCanvas.width
+                    || this.position.y > gameCanvas.height * 2
+                    || this.position.y < -gameCanvas.height) {
+                    return true;
+                }
+
+                render();
+            };
+
+
+            return that;
+        },
+
         spaceshipConstructor = function (options) {
             var that = {},
 
                 updateSprite = function () {
-                    //that.sprite.position = {x: that.x, y: that.y};
                     that.sprite.position = that.position;
-                    //that.sprite.x = that.x;
-                    //that.sprite.y = that.y;
                     that.sprite.update();
                 },
 
@@ -217,10 +302,9 @@ var IOC_INVADERS = function (config) {
                 },
 
                 fire = errorMessage,
-
                 move = errorMessage;
 
-            //that.bulletPool = options.bulletPool;
+            that.bulletPool = options.bulletPool;
             that.alive = false;
 
             that.spawn = function (data) {
@@ -286,9 +370,9 @@ var IOC_INVADERS = function (config) {
                 move();
 
                 // Sa ha sortit de la pantalla s'elimina. Deixem 1 pantalla de marge per poder fer el desplegament fora de la pantalla
-                if (this.position.x >= gameCanvas.width*2
+                if (this.position.x >= gameCanvas.width * 2
                     || this.position.x <= -gameCanvas.width
-                    || this.position.y > gameCanvas.height*2
+                    || this.position.y > gameCanvas.height * 2
                     || this.position.y < -gameCanvas.height) {
                     return true;
                 }
@@ -297,13 +381,9 @@ var IOC_INVADERS = function (config) {
                 render();
             };
 
-
             return that;
 
         },
-
-
-    ///////////////////////////////////////////////////////////
 
         spriteConstructor = function (options) {
             var that = {},
@@ -420,18 +500,21 @@ var IOC_INVADERS = function (config) {
         gameManagerConstructor = function () {
             var that = {},
 
+                enemyPool,
+                enemyShotPool,
+                playerShotPool,
+
                 initEnvironment = function (data) { // TODO: Esta puede ser privada, o ser sustituida por init
                     gameCanvas = document.getElementById(data.canvas.game);
                     gameContext = gameCanvas.getContext("2d");
 
                     enemyPool = poolConstructor(30, spaceshipConstructor, {bulletPool: null});
+                    enemyShotPool = poolConstructor(50, shotConstructor);
 
                     that.loadAssets(data.assets);
 
 
-                },
-
-                enemyPool;
+                };
 
 
             that.init = function () {
@@ -487,11 +570,11 @@ var IOC_INVADERS = function (config) {
                 })
             };
 
-            that.loadLevelsData = function() {
+            that.loadLevelsData = function () {
                 //that.loadData(config.levels_data_url, function (data) {
                 //    console.log(data);
 
-                    that.start();
+                that.start();
                 //});
             };
 
@@ -503,7 +586,9 @@ var IOC_INVADERS = function (config) {
                 enemyPool.instantiate('alien_b', {x: 900, y: 200}, {x: -2, y: 0});
                 enemyPool.instantiate('alien_c', {x: 900, y: 300}, {x: -2, y: -2});
                 enemyPool.instantiate('alien_d', {x: 900, y: 400}, {x: 0, y: -2});
-                gameLoop();
+                enemyShotPool.instantiate('standard_shot', {x: 900, y: 400}, {x: -1, y: 0});
+
+                    gameLoop();
 
             };
 
@@ -520,6 +605,7 @@ var IOC_INVADERS = function (config) {
 
                 //background.update();
                 enemyPool.update();
+                enemyShotPool.update();
 
 
             }

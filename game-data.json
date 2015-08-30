@@ -41,7 +41,7 @@
       "path": "assets/images/blast.png"
     },
     {
-      "id": "bullet_player",
+      "id": "bullet_enemy",
       "path": "assets/images/enemy_blast.png"
     }
   ],

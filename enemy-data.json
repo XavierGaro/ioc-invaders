@@ -128,5 +128,18 @@
       },
       "move": "movement_pattern_b"
     }
+  },
+  {
+    "name": "standard_shot",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_enemy",
+        "numberOfFrames": 1,
+        "ticksPerFrame": 1
+      },
+      "shot": null,
+      "move": "movement_pattern_b"
+    }
   }
 ]
