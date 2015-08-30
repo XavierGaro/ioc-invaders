@@ -1,0 +1,24 @@
+{
+    "canvas": {
+        "background": "background",
+        "main": "background",
+        "player": "background"
+    },
+    "layers": [
+        "assets/images/layer1.png",
+        "assets/images/layer2.png",
+        "assets/images/layer3.png",
+        "assets/images/layer4.png"],
+    "poolSize": {
+        "bullets_player": 30,
+        "bullets_enemies": 50,
+        "enemies": 30
+    },
+    "sprites": {
+        "spaceship": "assets/images/spaceship.png",
+        "bullet_player": "assets/images/blast.png",
+        "bullet_enemy": "assets/images/enemy_blast.png",
+        "enemy": "assets/images/alien_a.png"
+    }
+
+}

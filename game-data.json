@@ -1,0 +1,50 @@
+{
+  "assets": [
+    {
+      "id": "bg_layer_1",
+      "path": "assets/images/layer1.png"
+    },
+    {
+      "id": "bg_layer_2",
+      "path": "assets/images/layer2.png"
+    },
+    {
+      "id": "bg_layer_3",
+      "path": "assets/images/layer3.png"
+    },
+    {
+      "id": "bg_layer_4",
+      "path": "assets/images/layer4.png"
+    },
+    {
+      "id": "spaceship",
+      "path": "assets/images/spaceship.png"
+    },
+    {
+      "id": "enemy",
+      "path": "assets/images/alien_sprite_a.png"
+    },
+    {
+      "id": "bullet_player",
+      "path": "assets/images/blast.png"
+    },
+    {
+      "id": "bullet_player",
+      "path": "assets/images/enemy_blast.png"
+    }
+  ],
+  "canvas": {
+    "game": "game-canvas"
+  },
+  "layers": [
+    "bg_layer_1",
+    "bg_layer_2",
+    "bg_layer_3",
+    "bg_layer_4"
+  ],
+  "poolSize": {
+    "bullets_player": 30,
+    "bullets_enemies": 100,
+    "enemies": 50
+  }
+}
