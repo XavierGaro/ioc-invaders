@@ -1,0 +1,80 @@
+[
+  {
+    "name": "alien_a",
+    "data": {
+      "type": "enemy",
+      "chanceToFire": 0.1,
+      "sprite": {
+        "id": "alien_a",
+        "numberOfFrames": 6,
+        "ticksPerFrame": 4
+      },
+      "explosion": null,
+      "points": 10,
+      "cannon": {
+        "bullet": null,
+        "position": {
+          "x": -5,
+          "y": 14
+        },
+        "direction": {
+          "x": -2.5,
+          "y": 0
+        }
+      },
+      "move": "movement_pattern_a"
+    }
+  },
+  {
+    "name": "alien_b",
+    "data": {
+      "type": "enemy",
+      "chanceToFire": 0.2,
+      "sprite": {
+        "id": "alien_a",
+        "numberOfFrames": 6,
+        "ticksPerFrame": 4
+      },
+      "explosion": null,
+      "points": 15,
+      "cannon": {
+        "bullet": null,
+        "position": {
+          "x": -5,
+          "y": 14
+        },
+        "direction": {
+          "x": -2.5,
+          "y": 0
+        }
+      },
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "alien_c",
+    "data": {
+      "type": "enemy",
+      "chanceToFire": 0.2,
+      "sprite": {
+        "id": "alien_a",
+        "numberOfFrames": 6,
+        "ticksPerFrame": 4
+      },
+      "explosion": null,
+      "points": 15,
+      "cannon": {
+        "bullet": null,
+        "position": {
+          "x": -5,
+          "y": 14
+        },
+        "direction": {
+          "x": -2.5,
+          "y": 0
+        }
+      },
+      "move": "movement_pattern_c"
+    }
+  }
+]

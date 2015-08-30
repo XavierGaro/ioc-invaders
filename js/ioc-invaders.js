@@ -73,7 +73,7 @@ var Drawable = function (src, speed, x, y, width, height) {
     this.draw = function () {
     };
 
-    this.dirtyClear = function () {
+    this.clear = function () {
         //this.context.clearRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
     };
 
@@ -203,7 +203,7 @@ function Pool(maxSize, canvas, sprite) {
 
         };
 
-        enemy.dirtyClear = function () {
+        enemy.clear = function () {
             this.x = 0;
             this.y = 0;
             this.speed = 0;
@@ -253,7 +253,7 @@ function Pool(maxSize, canvas, sprite) {
             }
         };
 
-        bullet.dirtyClear = function () {
+        bullet.clear = function () {
             this.x = 0;
             this.y = 0;
             this.speed = 0;
@@ -278,10 +278,10 @@ function Pool(maxSize, canvas, sprite) {
         document.getElementById('score').innerHTML = gameManager.playerScore;
 
 
-        // Primero hacemos el dirtyClear
+        // Primero hacemos el clear
         for (var i = 0; i < size; i++) {
             if (pool[i].alive) {
-                pool[i].dirtyClear()
+                pool[i].clear()
             } else {
                 this.actives = i;
                 break;
@@ -294,7 +294,7 @@ function Pool(maxSize, canvas, sprite) {
             if (pool[i].alive) {
                 if (pool[i].draw()) {
                     this.disable(i);
-                    //pool[i].dirtyClear();
+                    //pool[i].clear();
                     //pool.push((pool.splice(i, 1))[0]);
                 }
             } else {
@@ -304,7 +304,7 @@ function Pool(maxSize, canvas, sprite) {
     };
 
     this.disable = function (i) {
-        pool[i].dirtyClear();
+        pool[i].clear();
         pool.push((pool.splice(i, 1))[0]);
     };
 
