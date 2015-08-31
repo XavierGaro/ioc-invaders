@@ -24,12 +24,11 @@ var IOC_INVADERS = function (config) {
 
         gameCanvas,
         gameContext,
-        alien = [],// TODO: només per proves
 
-        enemiesRepository = (function () {
+        entitiesRepository = (function () {
             var enemies = {},
 
-                addEnemy = function (name, data) {
+                addEntity = function (name, data) {
                     // Create sprite
                     var enemy = data;
 
@@ -38,7 +37,8 @@ var IOC_INVADERS = function (config) {
                         context: gameContext,
                         image: assetManager.getAsset(data.sprite.id),
                         numberOfFrames: data.sprite.numberOfFrames,
-                        ticksPerFrame: data.sprite.ticksPerFrame
+                        ticksPerFrame: data.sprite.ticksPerFrame,
+                        loop: data.sprite.loop
                     });
 
                     enemy.move = strategiesRepository.get(data.move);
@@ -53,10 +53,10 @@ var IOC_INVADERS = function (config) {
                 add: function (enemy) {
                     if (Array.isArray(enemy)) {
                         for (var i = 0; i < enemy.length; i++) {
-                            addEnemy(enemy[i].name, enemy[i].data);
+                            addEntity(enemy[i].name, enemy[i].data);
                         }
                     } else {
-                        addEnemy(enemy.name, enemy.data);
+                        addEntity(enemy.name, enemy.data);
                     }
 
                 },
@@ -64,6 +64,9 @@ var IOC_INVADERS = function (config) {
                 // Retorna un nou objecte amb les propietats originals més les mesclades
                 get: function (name, position, speed) {
                     var enemy = enemies[name];
+                    if (!enemy) {
+                        console.error("No se encuentra el enemigo: ", enemy);
+                    }
                     enemy.position = position;
                     enemy.speed = speed;
 
@@ -109,7 +112,6 @@ var IOC_INVADERS = function (config) {
                     this.position.y = this.position.y.clamp(this.extra.bottomEdge, this.extra.topEdge);
                 },
 
-
                 movement_pattern_b: function () { // TODO falta solucionar como se añaden los extras
                     // Inicialització
 
@@ -118,8 +120,7 @@ var IOC_INVADERS = function (config) {
 
                 },
 
-                //
-                movement_pattern_c: function () { // TODO falta solucionar como se añaden los extras
+                movement_pattern_c: function () { // TODO identic a movement_pattern_d però amb sin
                     // Inicialització
 
                     if (!this.extra.ready) {
@@ -134,6 +135,30 @@ var IOC_INVADERS = function (config) {
 
                     } else {
                         this.speed.y = this.extra.speed * Math.sin(this.extra.age * Math.PI / 64);
+
+                    }
+
+                    this.extra.age++;
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y;
+
+                },
+
+                movement_pattern_d: function () { // TODO identic a movement_pattern_d però amb cos
+                    // Inicialització
+
+                    if (!this.extra.ready) {
+                        this.extra.age = 0;
+                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
+                        this.extra.ready = true;
+                        this.extra.vertical = this.speed.x > this.speed.y;
+                    }
+
+                    if (this.extra.direction === 1) {
+                        this.speed.x = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
+
+                    } else {
+                        this.speed.y = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
 
                     }
 
@@ -159,7 +184,7 @@ var IOC_INVADERS = function (config) {
                 size = maxSize,
                 pool = [],
                 disable = function (index) {
-                    console.log("disabling " + index);
+                    //console.log("disabling " + index);
                     pool[index].clear();
                     pool.push((pool.splice(index, 1))[0]);
                 };
@@ -172,7 +197,7 @@ var IOC_INVADERS = function (config) {
             }
 
             that.instantiate = function (type, position, speed) {
-                var instance = pool[size - 1].spawn(enemiesRepository.get(type, position, speed));
+                var instance = pool[size - 1].start(entitiesRepository.get(type, position, speed));
                 pool.unshift(pool.pop());
                 return instance;
             };
@@ -197,8 +222,63 @@ var IOC_INVADERS = function (config) {
 
         },
 
-        shotConstructor = function () {
+        explosionConstructor = function (options) {
             var that = {},
+            //soundPool = options.pools.sound,
+
+            // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
+                updateSprite = function () {
+                    that.sprite.position = that.position;
+                    that.sprite.update();
+                },
+
+                render = function () {
+                    that.sprite.render()
+                };
+
+
+            that.alive = false;
+
+            that.start = function (data) {
+                that.alive = true;
+                that.type = data.type;
+                that.position = data.position;
+                that.sprite = data.sprite;
+                //soundPool.get(that.sound) // TODO sound, s'ha de reproduir-se aqui mateix!
+                return that;
+            };
+
+            that.clear = function () {
+                that.alive = false;
+                that.type = null;
+                that.position = {x: 0, y: 0};
+                that.sprite = null;
+            };
+
+            /**
+             * TODO: Aquesta funció es practicament identica a la de spaceshipConstructor.
+             *
+             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
+             */
+            that.update = function () {
+
+                console.log("explo");
+                // Si la animació ha finalitzat aturem la explosió
+                if (that.sprite.isDone) {
+                    return true;
+                }
+                updateSprite();
+                render();
+            };
+
+
+            return that;
+
+        },
+
+        shotConstructor = function (options) {
+            var that = {},
+            //soundPool = options.pools.sound,
 
             // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
                 updateSprite = function () {
@@ -210,8 +290,8 @@ var IOC_INVADERS = function (config) {
                     that.sprite.render()
                 },
 
-                errorMessage = function () { //TODO: Reactivar
-                    //console.error("Error, aquesta funció s'ha de passar a les dades del mètode spawn");
+                errorMessage = function () {
+                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
                 },
 
                 move = errorMessage;
@@ -219,15 +299,14 @@ var IOC_INVADERS = function (config) {
 
             that.alive = false;
 
-            that.spawn = function (data) {
+            that.start = function (data) {
                 that.isColliding = false;
                 that.alive = true;
 
                 that.type = data.type;
                 that.position = data.position;
                 that.sprite = data.sprite;
-                //that.shot = data.shot; // TODO sound, ha de reproduir-se aqui mateix!
-                //data.shot.get()
+                //soundPool.get(data.sound);// TODO sound, ha de reproduir-se aqui mateix!
 
                 that.speed = data.speed;
 
@@ -285,6 +364,7 @@ var IOC_INVADERS = function (config) {
             return that;
         },
 
+
         spaceshipConstructor = function (options) {
             var that = {},
 
@@ -298,16 +378,35 @@ var IOC_INVADERS = function (config) {
                 },
 
                 errorMessage = function () { //TODO: Reactivar
-                    //console.error("Error, aquesta funció s'ha de passar a les dades del mètode spawn");
+                    //console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
                 },
 
-                fire = errorMessage,
+                fire = function () {
+                    if (Array.isArray(that.cannon)) {
+
+                        for (var i = 0; i < that.cannon.length; i++) {
+                            shot(that.cannon[i]);
+                        }
+                    } else if (that.cannon) {
+                        shot(that.cannon);
+
+                    }
+                },
+
+                shot = function (cannon) {
+                    var origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y}
+                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
+                },
+
                 move = errorMessage;
 
-            that.bulletPool = options.bulletPool;
+            that.bulletPool = options.pool.bullet;
+            //console.log(options.bulletPool, that.bulletPool);
+            //alert("Stop");
+
             that.alive = false;
 
-            that.spawn = function (data) {
+            that.start = function (data) {
 
                 that.isColliding = false;
                 that.alive = true;
@@ -320,7 +419,7 @@ var IOC_INVADERS = function (config) {
                 that.explosion = data.explosion;
 
                 that.speed = data.speed;
-                that.points = data.points; // al spawn
+                that.points = data.points; // al start
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = data.extra || {};
@@ -339,13 +438,12 @@ var IOC_INVADERS = function (config) {
                 that.sprite = null;
 
                 that.speed = {x: 0, y: 0};
-                that.points = 0; // al spawn
+                that.points = 0;
                 that.cannon = {};
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = null;
                 move = errorMessage;
-                fire = errorMessage;
 
             };
 
@@ -385,6 +483,7 @@ var IOC_INVADERS = function (config) {
 
         },
 
+    // TODO: Els sprites han de ser reversibles, la meitat dels frames per  quan es mou a la dreta i la altre mitat per la esquerra
         spriteConstructor = function (options) {
             var that = {},
                 frameIndex = 0,
@@ -394,10 +493,13 @@ var IOC_INVADERS = function (config) {
                 context = options.context,
                 image = options.image,
                 width = image.width,
-                height = image.height;
+                height = image.height,
+                loop = options.loop === undefined ? true : options.loop;
+
 
             that.position = options.position || {x: 0, y: 0};
             that.size = {width: width / numberOfFrames, height: height};
+            that.isDone = false;
 
             that.update = function () {
 
@@ -409,7 +511,9 @@ var IOC_INVADERS = function (config) {
                     if (frameIndex < numberOfFrames - 1) {
                         frameIndex += 1;
                     } else {
+                        that.isDone = !loop;
                         frameIndex = 0;
+                        console.log("Completo?", that.isDone, "loop", loop, options.loop);
                     }
                 }
             };
@@ -420,6 +524,10 @@ var IOC_INVADERS = function (config) {
             };
 
             that.render = function () {
+
+                if (that.isDone) {
+                    return;
+                }
 
                 context.drawImage(
                     image,
@@ -503,13 +611,25 @@ var IOC_INVADERS = function (config) {
                 enemyPool,
                 enemyShotPool,
                 playerShotPool,
+                explosionPool,
+                soundPool,
 
                 initEnvironment = function (data) { // TODO: Esta puede ser privada, o ser sustituida por init
                     gameCanvas = document.getElementById(data.canvas.game);
                     gameContext = gameCanvas.getContext("2d");
 
-                    enemyPool = poolConstructor(30, spaceshipConstructor, {bulletPool: null});
-                    enemyShotPool = poolConstructor(50, shotConstructor);
+
+                    enemyShotPool = poolConstructor(500, shotConstructor);
+                    enemyPool = poolConstructor(100, spaceshipConstructor, {
+                        pool: {
+                            bullet: enemyShotPool,
+                            explosion: explosionPool
+                        }
+                    });
+
+                    playerShotPool = poolConstructor(100, shotConstructor/*, {pool: {sound: soundPool}}*/);
+                    explosionPool = poolConstructor(100, explosionConstructor/*, {pool: {sound: soundPool}}*/);
+                    //soundPool =  poolConstructor(100, explosionConstructor);
 
                     that.loadAssets(data.assets);
 
@@ -563,9 +683,9 @@ var IOC_INVADERS = function (config) {
             };
 
             that.loadEnemiesData = function () {
-                that.loadData(config.enemy_data_url, function (data) {
+                that.loadData(config.entity_data_url, function (data) {
                     console.log(data);
-                    enemiesRepository.add(data);
+                    entitiesRepository.add(data);
                     that.loadLevelsData();
                 })
             };
@@ -582,13 +702,22 @@ var IOC_INVADERS = function (config) {
             that.start = function () {
                 console.log("GameManager#start");
 
-                enemyPool.instantiate('alien_a', {x: 900, y: 100}, {x: -2, y: -2});
-                enemyPool.instantiate('alien_b', {x: 900, y: 200}, {x: -2, y: 0});
-                enemyPool.instantiate('alien_c', {x: 900, y: 300}, {x: -2, y: -2});
-                enemyPool.instantiate('alien_d', {x: 900, y: 400}, {x: 0, y: -2});
-                enemyShotPool.instantiate('standard_shot', {x: 900, y: 400}, {x: -1, y: 0});
+                //enemyPool.instantiate('alien_a', {x: 900, y: 100}, {x: -2, y: -2});
+                //enemyPool.instantiate('alien_b', {x: 900, y: 200}, {x: -2, y: 0});
+                //enemyPool.instantiate('alien_c', {x: 900, y: 300}, {x: -2, y: -2});
+                //enemyPool.instantiate('alien_d', {x: 900, y: 400}, {x: 0, y: -2});
+                //
+                //playerShotPool.instantiate('plasma_shot_1', {x: 10, y: 100}, {x: 1, y: 0});
+                //playerShotPool.instantiate('plasma_shot_2', {x: 10, y: 150}, {x: 1.5, y: 0});
+                //playerShotPool.instantiate('plasma_shot_3', {x: 10, y: 200}, {x: 2.5, y: 0});
+                //playerShotPool.instantiate('plasma_shot_4', {x: 10, y: 250}, {x: 3, y: 0});
+                //playerShotPool.instantiate('plasma_shot_5', {x: 10, y: 300}, {x: 3.5, y: 0});
+                //playerShotPool.instantiate('hot_plasma_shot', {x: 10, y: 350}, {x: 2.5, y: 0});
 
-                    gameLoop();
+                explosionPool.instantiate('enemy_explosion', {x: 400, y: 400}, {x: 0, y: 0});
+                explosionPool.instantiate('player_explosion', {x: 450, y: 400}, {x: 0, y: 0});
+
+                gameLoop();
 
             };
 
@@ -606,6 +735,8 @@ var IOC_INVADERS = function (config) {
                 //background.update();
                 enemyPool.update();
                 enemyShotPool.update();
+                playerShotPool.update();
+                explosionPool.update();
 
 
             }
@@ -637,10 +768,11 @@ var IOC_INVADERS = function (config) {
         };
 
 
-    // Aquest son els mètodes de IOC_INVADERS que son accesibles desde el espai global
+// Aquest son els mètodes de IOC_INVADERS que son accesibles desde el espai global
     return {
         start: init
     }
 };
+
 
 

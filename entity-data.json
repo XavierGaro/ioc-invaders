@@ -1,0 +1,274 @@
+[
+  {
+    "name": "alien_a",
+    "data": {
+      "type": "enemy",
+      "chanceToFire": 0.01,
+      "sprite": {
+        "id": "alien_a",
+        "numberOfFrames": 6,
+        "ticksPerFrame": 4
+      },
+      "explosion": null,
+      "points": 10,
+      "cannon": {
+        "bullet": "zigzag_shot",
+        "position": {
+          "x": -5,
+          "y": 14
+        },
+        "direction": {
+          "x": -2.5,
+          "y": 0
+        }
+      },
+      "move": "movement_pattern_a"
+    }
+  },
+  {
+    "name": "alien_b",
+    "data": {
+      "type": "enemy",
+      "chanceToFire": 0.07,
+      "sprite": {
+        "id": "alien_b",
+        "numberOfFrames": 4,
+        "ticksPerFrame": 6
+      },
+      "explosion": null,
+      "points": 15,
+      "cannon": {
+        "bullet": "zigzag_shot",
+        "position": {
+          "x": -5,
+          "y": 14
+        },
+        "direction": {
+          "x": -3.5,
+          "y": 0
+        }
+      },
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "alien_c",
+    "data": {
+      "type": "enemy",
+      "chanceToFire": 0.05,
+      "sprite": {
+        "id": "alien_c",
+        "numberOfFrames": 3,
+        "ticksPerFrame": 8
+      },
+      "explosion": null,
+      "points": 15,
+      "cannon": {
+        "bullet": "standard_shot",
+        "position": {
+          "x": -5,
+          "y": 14
+        },
+        "direction": {
+          "x": -2.5,
+          "y": 0
+        }
+      },
+      "move": "movement_pattern_c"
+    }
+  },
+  {
+    "name": "alien_d",
+    "data": {
+      "type": "enemy",
+      "chanceToFire": 0.5,
+      "sprite": {
+        "id": "alien_d",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 12
+      },
+      "explosion": null,
+      "points": 15,
+      "cannon": [
+        {
+          "bullet": "wave_shot_a",
+          "position": {
+            "x": -5,
+            "y": 2
+          },
+          "direction": {
+            "x": -2.5,
+            "y": 0
+          }
+        },
+        {
+          "bullet": "wave_shot_b",
+          "position": {
+            "x": -5,
+            "y": 40
+          },
+          "direction": {
+            "x": -2.5,
+            "y": 0
+          }
+        }
+      ],
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "standard_shot",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_enemy",
+        "numberOfFrames": 1,
+        "ticksPerFrame": 1
+      },
+      "shot": null,
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "wave_shot_a",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_enemy",
+        "numberOfFrames": 1,
+        "ticksPerFrame": 1
+      },
+      "shot": null,
+      "move": "movement_pattern_c"
+    }
+  },
+  {
+    "name": "wave_shot_b",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_enemy",
+        "numberOfFrames": 1,
+        "ticksPerFrame": 1
+      },
+      "shot": null,
+      "move": "movement_pattern_d"
+    }
+  },
+  {
+    "name": "zigzag_shot",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_enemy",
+        "numberOfFrames": 1,
+        "ticksPerFrame": 1
+      },
+      "shot": null,
+      "move": "movement_pattern_a"
+    }
+  },
+  {
+    "name": "plasma_shot_1",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_player_1",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 8
+      },
+      "shot": null,
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "plasma_shot_2",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_player_2",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 6
+      },
+      "shot": null,
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "plasma_shot_3",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_player_3",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 8
+      },
+      "shot": null,
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "plasma_shot_4",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_player_4",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 10
+      },
+      "shot": null,
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "plasma_shot_5",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_player_5",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 12
+      },
+      "shot": null,
+      "move": "movement_pattern_b"
+    }
+  },
+  {
+    "name": "hot_plasma_shot",
+    "data": {
+      "type": "shot",
+      "sprite": {
+        "id": "bullet_player_6",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 8
+      },
+      "shot": null,
+      "move": "movement_pattern_c"
+    }
+  },
+  {
+    "name": "enemy_explosion",
+    "data": {
+      "type": "explosion",
+      "sprite": {
+        "id": "explosion_enemy",
+        "numberOfFrames": 8,
+        "ticksPerFrame": 6,
+        "loop":false
+      }
+    }
+  },
+  {
+    "name": "player_explosion",
+    "data": {
+      "type": "explosion",
+      "sprite": {
+        "id": "explosion_player",
+        "numberOfFrames": 5,
+        "ticksPerFrame": 6,
+        "loop":false
+      }
+    }
+  }
+
+]

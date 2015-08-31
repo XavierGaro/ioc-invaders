@@ -37,12 +37,40 @@
       "path": "assets/images/alien_sprite_d.png"
     },
     {
-      "id": "bullet_player",
-      "path": "assets/images/blast.png"
+      "id": "bullet_player_1",
+      "path": "assets/images/blast_sprite_1.png"
+    },
+    {
+      "id": "bullet_player_2",
+      "path": "assets/images/blast_sprite_2.png"
+    },
+    {
+      "id": "bullet_player_3",
+      "path": "assets/images/blast_sprite_3.png"
+    },
+    {
+      "id": "bullet_player_4",
+      "path": "assets/images/blast_sprite_4.png"
+    },
+    {
+      "id": "bullet_player_5",
+      "path": "assets/images/blast_sprite_5.png"
+    },
+    {
+      "id": "bullet_player_6",
+      "path": "assets/images/plasma_sprite.png"
     },
     {
       "id": "bullet_enemy",
       "path": "assets/images/enemy_blast.png"
+    },
+    {
+      "id": "explosion_enemy",
+      "path": "assets/images/enemy_explosion_sprite.png"
+    },
+    {
+      "id": "explosion_player",
+      "path": "assets/images/player_explosion_sprite.png"
     }
   ],
   "canvas": {

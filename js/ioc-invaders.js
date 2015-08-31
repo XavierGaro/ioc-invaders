@@ -114,11 +114,6 @@ function Pool(maxSize, canvas, sprite) {
         }
     };
 
-    /**
-     * create the enemy ship object
-     * @param src
-     * @param type
-     */
     this.generateEnemy = function (src, type, pool) {
         // TODO: Los enemigos deberian tener también unas coordenadas para lo que sería el cañon, que es el punto de origen
         // de las balas
@@ -136,7 +131,7 @@ function Pool(maxSize, canvas, sprite) {
 
 
         // Sets the Enemy values
-        enemy.spawn = function (x, y, speed) {
+        enemy.start = function (x, y, speed) {
             this.x = x;
             this.y = y;
             this.speed = speed;
@@ -225,7 +220,7 @@ function Pool(maxSize, canvas, sprite) {
         bullet.type = type;
 
         /** Sets the bullet values */
-        bullet.spawn = function (x, y, speed) {
+        bullet.start = function (x, y, speed) {
             this.x = x;
             this.y = y;
             this.speed = speed;
@@ -269,7 +264,7 @@ function Pool(maxSize, canvas, sprite) {
     this.get = function (x, y, speed) {
 
         if (!pool[size - 1].alive) {
-            pool[size - 1].spawn(x, y, speed);
+            pool[size - 1].start(x, y, speed);
             pool.unshift(pool.pop());
         }
     };
