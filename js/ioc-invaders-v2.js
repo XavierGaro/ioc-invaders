@@ -63,14 +63,14 @@ var IOC_INVADERS = function (config) {
 
                 // Retorna un nou objecte amb les propietats originals més les mesclades
                 get: function (name, position, speed) {
-                    var enemy = enemies[name];
-                    if (!enemy) {
-                        console.error("No se encuentra el enemigo: ", enemy);
+                    var entity = enemies[name];
+                    if (!entity) {
+                        console.error("No se encuentra el enemigo: ", entity);
                     }
-                    enemy.position = position;
-                    enemy.speed = speed;
+                    entity.position = position;
+                    entity.speed = speed;
 
-                    return enemy;
+                    return entity;
                 }
             }
         })(),
@@ -262,7 +262,7 @@ var IOC_INVADERS = function (config) {
              */
             that.update = function () {
 
-                console.log("explo");
+
                 // Si la animació ha finalitzat aturem la explosió
                 if (that.sprite.isDone) {
                     return true;
@@ -483,6 +483,85 @@ var IOC_INVADERS = function (config) {
 
         },
 
+        backgroundConstructor = function (options) {
+            var that = {},
+                layers = {},
+                context = options.context,
+                canvas = options.canvas,
+
+                move = function(layer) {
+                    layer.position.x += layer.speed.x;
+                    layer.position.y += layer.speed.y;
+
+                    if (layer.position.x<-layer.image.width || layer.position.x>layer.image.width) {
+                        layer.position.x = 0;
+                    }
+
+                    if (layer.position.y<-layer.image.height || layer.position.y>layer.image.height) {
+                        layer.position.y = 0;
+                    }
+
+
+
+                },
+
+                render = function (layer) {
+
+                    context.drawImage(
+                        layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
+
+                    // Segons la direcció dibuixem pantalles extres a les posicions necessaries
+                    if (layer.speed.x < 0) {
+                        context.drawImage(
+                            layer.image, layer.position.x + layer.image.width,
+                            layer.position.y, layer.image.width, layer.image.height);
+                    }
+
+                    if (layer.speed.x > 0) {
+                        context.drawImage(
+                            layer.image, layer.position.x - layer.image.width,
+                            layer.position.y, layer.image.width, layer.image.height);
+                    }
+
+                    if (layer.speed.y < 0) {
+                        context.drawImage(
+                            layer.image, layer.position.x, layer.position.y + layer.image.height,
+                            layer.image.width, layer.image.height);
+                    }
+
+                    if (layer.speed.y > 0) {
+                        context.drawImage(
+                            layer.image, layer.position.x,
+                            layer.position.y - layer.image.height, layer.image.width, layer.image.height);
+                    }
+
+                };
+
+            that.update = function () {
+                for (var i = 0; i < layers.length; i++) {
+                    move(layers[i]);
+                    render(layers[i]);
+                }
+
+            };
+
+
+            that.start = function (data) {
+                layers = data.layers;
+                console.log(layers);
+
+                for (var i = 0; i < layers.length; i++) {
+                    layers[i].position = {x: 0, y: 0}
+                }
+            };
+
+            that.clear = function () {
+                layers = {};
+            };
+
+            return that;
+        },
+
     // TODO: Els sprites han de ser reversibles, la meitat dels frames per  quan es mou a la dreta i la altre mitat per la esquerra
         spriteConstructor = function (options) {
             var that = {},
@@ -513,15 +592,14 @@ var IOC_INVADERS = function (config) {
                     } else {
                         that.isDone = !loop;
                         frameIndex = 0;
-                        console.log("Completo?", that.isDone, "loop", loop, options.loop);
                     }
                 }
             };
 
             // TODO: En aquest projecte no el fem servir perqué només tenim un canvas i es redibuixa completament
-            that.clear = function () {
-                context.clearRect(that.position.x, that.position.y, that.size.width, that.size.height);
-            };
+            //that.clear = function () {
+            //    context.clearRect(that.position.x, that.position.y, that.size.width, that.size.height);
+            //};
 
             that.render = function () {
 
@@ -614,6 +692,8 @@ var IOC_INVADERS = function (config) {
                 explosionPool,
                 soundPool,
 
+                background,
+
                 initEnvironment = function (data) { // TODO: Esta puede ser privada, o ser sustituida por init
                     gameCanvas = document.getElementById(data.canvas.game);
                     gameContext = gameCanvas.getContext("2d");
@@ -694,6 +774,35 @@ var IOC_INVADERS = function (config) {
                 //that.loadData(config.levels_data_url, function (data) {
                 //    console.log(data);
 
+
+                background = backgroundConstructor({
+                    context: gameContext,
+                    canvas: gameCanvas // TODO sembla innecessari
+                });
+
+                background.start(
+                    {
+                        layers: [
+                            {
+                                image: assetManager.getAsset('bg_layer_1'),
+                                speed: {x: 1, y: 0}
+                            },
+                            {
+                                image: assetManager.getAsset('bg_layer_2'),
+                                speed: {x: 2, y: 0}
+                            },
+                            {
+                                image: assetManager.getAsset('bg_layer_3'),
+                                speed: {x: 4, y: 0}
+                            },
+                            {
+                                image: assetManager.getAsset('bg_layer_4'),
+                                speed: {x: 8, y: 0}
+                            }
+                        ]
+                    });
+
+
                 that.start();
                 //});
             };
@@ -702,17 +811,17 @@ var IOC_INVADERS = function (config) {
             that.start = function () {
                 console.log("GameManager#start");
 
-                //enemyPool.instantiate('alien_a', {x: 900, y: 100}, {x: -2, y: -2});
-                //enemyPool.instantiate('alien_b', {x: 900, y: 200}, {x: -2, y: 0});
-                //enemyPool.instantiate('alien_c', {x: 900, y: 300}, {x: -2, y: -2});
-                //enemyPool.instantiate('alien_d', {x: 900, y: 400}, {x: 0, y: -2});
-                //
-                //playerShotPool.instantiate('plasma_shot_1', {x: 10, y: 100}, {x: 1, y: 0});
-                //playerShotPool.instantiate('plasma_shot_2', {x: 10, y: 150}, {x: 1.5, y: 0});
-                //playerShotPool.instantiate('plasma_shot_3', {x: 10, y: 200}, {x: 2.5, y: 0});
-                //playerShotPool.instantiate('plasma_shot_4', {x: 10, y: 250}, {x: 3, y: 0});
-                //playerShotPool.instantiate('plasma_shot_5', {x: 10, y: 300}, {x: 3.5, y: 0});
-                //playerShotPool.instantiate('hot_plasma_shot', {x: 10, y: 350}, {x: 2.5, y: 0});
+                enemyPool.instantiate('alien_a', {x: 900, y: 100}, {x: -2, y: -2});
+                enemyPool.instantiate('alien_b', {x: 900, y: 200}, {x: -2, y: 0});
+                enemyPool.instantiate('alien_c', {x: 900, y: 300}, {x: -2, y: -2});
+                enemyPool.instantiate('alien_d', {x: 900, y: 400}, {x: 0, y: -2});
+
+                playerShotPool.instantiate('plasma_shot_1', {x: 10, y: 100}, {x: 1, y: 0});
+                playerShotPool.instantiate('plasma_shot_2', {x: 10, y: 150}, {x: 1.5, y: 0});
+                playerShotPool.instantiate('plasma_shot_3', {x: 10, y: 200}, {x: 2.5, y: 0});
+                playerShotPool.instantiate('plasma_shot_4', {x: 10, y: 250}, {x: 3, y: 0});
+                playerShotPool.instantiate('plasma_shot_5', {x: 10, y: 300}, {x: 3.5, y: 0});
+                playerShotPool.instantiate('hot_plasma_shot', {x: 10, y: 350}, {x: 2.5, y: 0});
 
                 explosionPool.instantiate('enemy_explosion', {x: 400, y: 400}, {x: 0, y: 0});
                 explosionPool.instantiate('player_explosion', {x: 450, y: 400}, {x: 0, y: 0});
@@ -728,11 +837,11 @@ var IOC_INVADERS = function (config) {
                 window.requestAnimationFrame(gameLoop);
 
 
-                that.clear(); // TODO: Això no cal fer-ho servir una vegada estiguin implementats els scrolls
+                //that.clear(); // TODO: Això no cal fer-ho servir una vegada estiguin implementats els scrolls
                 // update()
                 // render()
 
-                //background.update();
+                background.update();
                 enemyPool.update();
                 enemyShotPool.update();
                 playerShotPool.update();
@@ -742,7 +851,8 @@ var IOC_INVADERS = function (config) {
             }
 
             /**
-             * Aquesta funció esborra tot el canvas. Com que el nostre joc fa servir imatges a pantalla completa no caldra
+             * Aquesta funció esborra tot el canvas. Com que el nostre joc fa servir imatges a pantalla completa no
+             * caldra al gameLoop però es pot fer servir per altres pantalles
              */
             that.clear = function () {
                 gameContext.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
