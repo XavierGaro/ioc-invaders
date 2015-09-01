@@ -44,10 +44,141 @@
           "distance": 100,
           "spawns": [
             {
-              "type": "alien_a",
+              "type": "alien_c",
               "formation": {
                 "type": "columns",
                 "amount": 21,
+                "column_height": 350,
+                "spacer": 50
+              },
+              "position": {
+                "x": 104,
+                "y": 81
+              },
+              "speed": {
+                "x": -1,
+                "y": 0
+              }
+            }
+          ]
+        },
+        {
+          "distance": 200,
+          "spawns": []
+        }
+      ],
+      "end": 500
+    },
+    {
+      "name": "Nivell 2",
+      "description": "Aquest es el segon nivell del joc.",
+      "background": {
+        "layers": [
+          {
+            "id": "bg_layer_1_green",
+            "speed": {
+              "x": -1,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_2_green",
+            "speed": {
+              "x": -4,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_4_green",
+            "speed": {
+              "x": -8,
+              "y": 0
+            }
+          }
+        ],
+        "speed": {
+          "start": 0,
+          "target": 1
+        }
+      },
+      "waves": [
+        {
+          "distance": 100,
+          "spawns": [
+            {
+              "type": "alien_a",
+              "formation": {
+                "type": "columns",
+                "amount": 7,
+                "column_height": 350,
+                "spacer": 50
+              },
+              "position": {
+                "x": 104,
+                "y": 81
+              },
+              "speed": {
+                "x": -1,
+                "y": 0
+              }
+            }
+          ]
+        },
+        {
+          "distance": 200,
+          "spawns": []
+        }
+      ],
+      "end": 500
+    },
+    {
+      "name": "Nivell 3",
+      "description": "Aquest es el tercer nivell del joc.",
+      "background": {
+        "layers": [
+          {
+            "id": "bg_layer_1",
+            "speed": {
+              "x": -1,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_2_green",
+            "speed": {
+              "x": -2,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_3",
+            "speed": {
+              "x": -4,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_4_green",
+            "speed": {
+              "x": -8,
+              "y": 0
+            }
+          }
+        ],
+        "speed": {
+          "start": 0,
+          "target": 1
+        }
+      },
+      "waves": [
+        {
+          "distance": 100,
+          "spawns": [
+            {
+              "type": "alien_a",
+              "formation": {
+                "type": "columns",
+                "amount": 1,
                 "column_height": 350,
                 "spacer": 50
               },

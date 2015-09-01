@@ -289,7 +289,6 @@ var IOC_INVADERS = function (config) {
                 }
             };
 
-
             return that;
 
         },
@@ -448,7 +447,7 @@ var IOC_INVADERS = function (config) {
                 }
 
                 //console.log(that.checkBoundaries>=MAX_TIME_OUTSIDE_BOUNDARIES);
-                return that.outsideBoundariesTime>=MAX_TIME_OUTSIDE_BOUNDARIES;
+                return that.outsideBoundariesTime >= MAX_TIME_OUTSIDE_BOUNDARIES;
             };
 
 
@@ -638,19 +637,9 @@ var IOC_INVADERS = function (config) {
                 that.move();
                 that.fire();
 
-                // Sa ha sortit de la pantalla s'elimina. Deixem 1 pantalla de marge per poder fer el desplegament fora de la pantalla
-                //if (this.position.x >= gameCanvas.width * 2
-                //    || this.position.x <= -gameCanvas.width
-                //    || this.position.y > gameCanvas.height * 2
-                //    || this.position.y < -gameCanvas.height) {
-                //    return true;
-                //}
-
                 if (that.checkBoundaries()) {
                     return true;
                 }
-
-                console.log("alien", that.outsideBoundariesTime);
 
                 that.render();
             };
@@ -666,7 +655,7 @@ var IOC_INVADERS = function (config) {
                 }
 
                 //console.log(that.checkBoundaries>=MAX_TIME_OUTSIDE_BOUNDARIES);
-                return that.outsideBoundariesTime>=MAX_TIME_OUTSIDE_BOUNDARIES;
+                return that.outsideBoundariesTime >= MAX_TIME_OUTSIDE_BOUNDARIES;
             };
 
             return that;
@@ -1074,9 +1063,9 @@ var IOC_INVADERS = function (config) {
                 //explosionPool.instantiate('player_explosion', {x: 450, y: 400}, {x: 0, y: 0});
 
                 currentLevel = 0;
-                nextWave = 0;
+
                 score = 0; // Esto no debe estar en el restart
-                distance = 0;
+
 
                 that.startLevel(currentLevel);
 
@@ -1091,7 +1080,8 @@ var IOC_INVADERS = function (config) {
 
                 background.start(levels[level].background);
                 levelEnded = false;
-
+                nextWave = 0;
+                distance = 0;
             };
 
 
@@ -1100,7 +1090,8 @@ var IOC_INVADERS = function (config) {
                 window.requestAnimationFrame(gameLoop);
 
                 if (enemyPool.actives === 0 && levelEnded) {
-                    return;
+                    endLevel();
+                    //return;
                 }
 
                 updatedSprites = [];
@@ -1147,7 +1138,7 @@ var IOC_INVADERS = function (config) {
                 }
 
                 if (distance > levels[currentLevel].end) {
-                    console.log("Level ended");
+                    //console.log("Level ended");
                     levelEnded = true;
                 }
             }
@@ -1166,7 +1157,7 @@ var IOC_INVADERS = function (config) {
                         var spacer = wave.formation.spacer;
                         var nextColumn = originPosition.y + wave.formation.column_height;
                         var amount = wave.formation.amount;
-                        var currentPosition = wave.position;
+                        var currentPosition = {x: wave.position.x, y: wave.position.y};
 
 
                         for (var i = 0; i < amount; i++) {
@@ -1196,11 +1187,29 @@ var IOC_INVADERS = function (config) {
 
             }
 
+            function endLevel() {
+                that.clearScreen();
+                console.log("Completat el nivell", levels[currentLevel].name);
+                currentLevel++;
+
+                if (currentLevel >= levels.length) {
+                    console.log("Enhorabona, has completat tots els nivells, tornem a començar!")
+                    currentLevel = 0;
+                }
+
+                player.position = {x: 10, y: 256};
+                player.speed = {x: 3, y: 3};
+
+
+
+                that.startLevel(currentLevel); // TODO com que ja som dins del loop del joc no cal tornar a cridar-lo
+            }
+
             /**
              * Aquesta funció esborra tot el canvas. Com que el nostre joc fa servir imatges a pantalla completa no
              * caldra al gameLoop però es pot fer servir per altres pantalles
              */
-            that.clear = function () {
+            that.clearScreen = function () {
                 gameContext.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             };
 
@@ -1217,7 +1226,6 @@ var IOC_INVADERS = function (config) {
             assetManager = assetManagerConstructor(function (current, total) {
                 console.log("Downloaded asset: " + current + "/" + total);
             });
-
 
             // Iniciem el joc
             gameManager.init();

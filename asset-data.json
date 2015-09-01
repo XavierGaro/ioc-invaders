@@ -17,6 +17,22 @@
       "path": "assets/images/layer4.png"
     },
     {
+      "id": "bg_layer_1_green",
+      "path": "assets/images/layer1_green.png"
+    },
+    {
+      "id": "bg_layer_2_green",
+      "path": "assets/images/layer2_green.png"
+    },
+    {
+      "id": "bg_layer_3_green",
+      "path": "assets/images/layer3_green.png"
+    },
+    {
+      "id": "bg_layer_4_green",
+      "path": "assets/images/layer4_green.png"
+    },
+    {
       "id": "spaceship",
       "path": "assets/images/spaceship.png"
     },
