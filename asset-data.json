@@ -96,7 +96,7 @@
         "numberOfFrames": 4,
         "ticksPerFrame": 16
       },
-       {
+      {
         "id": "bullet_player_1",
         "numberOfFrames": 2,
         "ticksPerFrame": 8
@@ -162,6 +162,18 @@
         "id": "alien_d",
         "numberOfFrames": 2,
         "ticksPerFrame": 12
+      }
+    ],
+    "sounds": [
+      {
+        "id": "shoot",
+        "path": "assets/sounds/shoot.mp3",
+        "volume": 0.15
+      },
+      {
+        "id": "laser_gun",
+        "path": "assets/sounds/laser_gun.mp3",
+        "volume": 0.15
       }
     ]
   },
