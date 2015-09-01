@@ -1,3 +1,10 @@
+// Drets de autor
+// laser_gun.mp3: http://soundbible.com/1769-Laser-Gun.html
+// laser.mp3: http://soundbible.com/1087-Laser.html
+// alien_death_ray.mp3: http://soundbible.com/1274-Alien-Death-Ray.html
+// large_explosion.mp3: http://www.freesound.org/people/inferno/sounds/18384/
+// laser_rocket.mp3: http://www.freesound.org/people/EcoDTR/sounds/36847/
+
 // UTILITATS
 
 /**
@@ -319,6 +326,7 @@ var IOC_INVADERS = function (config) {
                     that.position = data.position;
                     that.sprite = assetManager.getSprite(data.sprite);
                     that.sprite.isDone = false;
+                    assetManager.getSound(data.sound);
                     //soundPool.get(that.sound) // TODO sound, s'ha de reproduir-se aqui mateix!
                     return that;
                 };
@@ -385,7 +393,7 @@ var IOC_INVADERS = function (config) {
                     that.sprite = assetManager.getSprite(data.sprite);
 
 
-                    assetManager.getSound(data.shootSound)
+                    assetManager.getSound(data.sound)
                     //that.sprite = assetManager.getSprite(data.sprite);;
                     //soundPool.get(data.sound);// TODO sound, ha de reproduir-se aqui mateix!
 
@@ -1001,7 +1009,10 @@ var IOC_INVADERS = function (config) {
                         }
 
                         if (maxVolume <= 0) {
+                            console.log("todos updated");
                             clearInterval(intervalID);
+                        } else {
+                            console.log(maxVolume);
                         }
                     }, 200); // cada 200ms redueix el volum fins que arriba al silenci
 
@@ -1024,6 +1035,7 @@ var IOC_INVADERS = function (config) {
                         }
 
                         if (allUpdated) {
+                            console.log("todos updated");
                             clearInterval(intervalID);
                         }
                     }, 200); // cada 200ms redueix el volum fins que arriba al silenci
