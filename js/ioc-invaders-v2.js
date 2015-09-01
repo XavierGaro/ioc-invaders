@@ -38,6 +38,8 @@ var IOC_INVADERS = function (config) {
         gameCanvas,// TODO: per acabar de definir si aquests dos valors els injectem on calgui o els deixem globals (ara es fa servir de les dues maneras)
         gameContext,
 
+        MAX_TIME_OUTSIDE_BOUNDARIES = 180,// nombre de frames fora de la pantalla avans de esborrar-lo. a 60 FPS això equival a 3s
+
         updatedSprites = [],// TODO: cercar altre solució, això hauria de ser una propietar stàtica de Sprite en ES6
 
         entitiesRepository = (function () {
@@ -348,23 +350,25 @@ var IOC_INVADERS = function (config) {
 
         shotConstructor = function (options) {
             var that = {},
+                errorMessage = function () {
+                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
+                };
+
             //soundPool = options.pools.sound,
 
             // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
-                updateSprite = function () {
-                    that.sprite.position = that.position;
-                    that.sprite.update();
-                },
 
-                render = function () {
-                    that.sprite.render()
-                },
+            that.render = function () {
+                that.sprite.render()
+            };
 
-                errorMessage = function () {
-                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
-                },
 
-                move = errorMessage;
+            that.updateSprite = function () {
+                that.sprite.position = that.position;
+                that.sprite.update();
+            };
+
+            that.move = errorMessage;
 
 
             that.alive = false;
@@ -382,7 +386,8 @@ var IOC_INVADERS = function (config) {
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = data.extra || {};
-                move = data.move.bind(that);
+                that.move = data.move.bind(that);
+                that.outsideBoundariesTime = 0;
 
                 return that;
             };
@@ -390,6 +395,7 @@ var IOC_INVADERS = function (config) {
             that.clear = function () {
                 that.isColliding = false;
                 that.alive = false;
+                that.outsideBoundariesTime = 0;
 
                 that.type = null;
                 that.position = {x: 0, y: 0};
@@ -399,7 +405,7 @@ var IOC_INVADERS = function (config) {
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = null;
-                move = errorMessage;
+                that.move = errorMessage;
 
             };
 
@@ -415,19 +421,34 @@ var IOC_INVADERS = function (config) {
                     return true;
                 }
 
-                updateSprite();
+                that.updateSprite();
 
-                move();
+                that.move();
 
-                // Sa ha sortit de la pantalla s'elimina. Deixem 1 pantalla de marge per poder fer el desplegament fora de la pantalla
-                if (this.position.x >= gameCanvas.width * 2
-                    || this.position.x <= -gameCanvas.width
-                    || this.position.y > gameCanvas.height * 2
-                    || this.position.y < -gameCanvas.height) {
+
+                // TODO codi repetit a spaceshipConstrutor, canviar per altre solució
+                // Si ha sortit de la pantalla durant massa temps s'elimina.
+                if (that.checkBoundaries()) {
                     return true;
                 }
 
-                render();
+                //console.log("bullet", that.outsideBoundariesTime, MAX_TIME_OUTSIDE_BOUNDARIES);
+
+                that.render();
+            };
+
+            that.checkBoundaries = function () {
+                if (this.position.x >= gameCanvas.width
+                    || this.position.x <= -this.sprite.size.width
+                    || this.position.y > gameCanvas.height
+                    || this.position.y < -this.sprite.size.height) {
+                    this.outsideBoundariesTime++;
+                } else {
+                    this.outsideBoundariesTime = 0;
+                }
+
+                //console.log(that.checkBoundaries>=MAX_TIME_OUTSIDE_BOUNDARIES);
+                return that.outsideBoundariesTime>=MAX_TIME_OUTSIDE_BOUNDARIES;
             };
 
 
@@ -440,10 +461,10 @@ var IOC_INVADERS = function (config) {
             //that.start(entitiesRepository.get('player', {x: 10, y: 256}, {x: 3, y: 3})) // TODO la posició inicial
             that.start(entitiesRepository.get('player', options.position, options.speed)) // TODO la posició inicial
 
-            that.shot= function (cannon) {
+            that.shot = function (cannon) {
                 var origin;
 
-                if (that.lastShot>cannon.fireRate) {
+                if (that.lastShot > cannon.fireRate) {
                     that.lastShot = 0;
                     origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
                     that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
@@ -570,6 +591,8 @@ var IOC_INVADERS = function (config) {
                 that.speed = data.speed;
                 that.points = data.points;
 
+                that.outsideBoundariesTime = 0;
+
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = data.extra || {};
                 if (data.move) {
@@ -594,6 +617,7 @@ var IOC_INVADERS = function (config) {
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = null;
                 that.move = errorMessage;
+                that.outsideBoundariesTime = 0;
 
             };
 
@@ -615,15 +639,34 @@ var IOC_INVADERS = function (config) {
                 that.fire();
 
                 // Sa ha sortit de la pantalla s'elimina. Deixem 1 pantalla de marge per poder fer el desplegament fora de la pantalla
-                if (this.position.x >= gameCanvas.width * 2
-                    || this.position.x <= -gameCanvas.width
-                    || this.position.y > gameCanvas.height * 2
-                    || this.position.y < -gameCanvas.height) {
+                //if (this.position.x >= gameCanvas.width * 2
+                //    || this.position.x <= -gameCanvas.width
+                //    || this.position.y > gameCanvas.height * 2
+                //    || this.position.y < -gameCanvas.height) {
+                //    return true;
+                //}
+
+                if (that.checkBoundaries()) {
                     return true;
                 }
 
+                console.log("alien", that.outsideBoundariesTime);
 
                 that.render();
+            };
+
+            that.checkBoundaries = function () {
+                if (this.position.x >= gameCanvas.width
+                    || this.position.x <= -this.sprite.size.width
+                    || this.position.y > gameCanvas.height
+                    || this.position.y < -this.sprite.size.height) {
+                    this.outsideBoundariesTime++;
+                } else {
+                    this.outsideBoundariesTime = 0;
+                }
+
+                //console.log(that.checkBoundaries>=MAX_TIME_OUTSIDE_BOUNDARIES);
+                return that.outsideBoundariesTime>=MAX_TIME_OUTSIDE_BOUNDARIES;
             };
 
             return that;
@@ -883,6 +926,7 @@ var IOC_INVADERS = function (config) {
             var that = {},
                 levels = {},
                 currentLevel,
+                levelEnded,
                 score,
                 distance, // Relativa al nivell actual
                 nextWave, // Relativa al nivell actual
@@ -1046,6 +1090,7 @@ var IOC_INVADERS = function (config) {
                 console.log(levels[level].description);
 
                 background.start(levels[level].background);
+                levelEnded = false;
 
             };
 
@@ -1053,6 +1098,10 @@ var IOC_INVADERS = function (config) {
             function gameLoop() { // TODO: eliminar després de les proves o canviar el nom a update <-- altre opció es fer que desde el gameLoop es cridint els diferents mètodes: Update(), DetectCollisions(), etc.
                 //console.log("GameManager#gameLoop");
                 window.requestAnimationFrame(gameLoop);
+
+                if (enemyPool.actives === 0 && levelEnded) {
+                    return;
+                }
 
                 updatedSprites = [];
 
@@ -1099,6 +1148,7 @@ var IOC_INVADERS = function (config) {
 
                 if (distance > levels[currentLevel].end) {
                     console.log("Level ended");
+                    levelEnded = true;
                 }
             }
 
