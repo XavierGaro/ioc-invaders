@@ -62,7 +62,7 @@
     },
     {
       "id": "bullet_enemy",
-      "path": "assets/images/enemy_blast.png"
+      "path": "assets/images/alien_blast_sprite.png"
     },
     {
       "id": "explosion_enemy",

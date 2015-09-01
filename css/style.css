@@ -18,16 +18,7 @@ body {
     z-index: -2;
 }
 
-#main {
-    z-index: -1;
-}
-
-
-#ship {
-    z-index: 0;
-}
-
-.score {
+.score, .distance, .actives {
     position: absolute;
     top: 5px;
     left:480px;
@@ -56,4 +47,11 @@ body {
 
 .game-over span:hover {
     color: #FFD700;
+}
+
+.distance {
+    top: 20px;
+}
+.actives {
+    top:35px;
 }

@@ -1,16 +1,29 @@
 // UTILITATS
 
 /**
- * Aquesta utilitat afegeix el mètode clamp a la superclasse Number. El que fa es afegir el métode clamp a tots els
+ * Aquesta utilitat afegeix el mètode clamp a la prototip Number. El que fa es afegir el métode clamp a tots els
  * nombres de manera que podem encaixonar-lo dins d'uns limits. En cas de que el nombre sigui menor que el mínim el
  * valor retornat es aquest mínim, i en cas de que sigui superior al màxim el valor retornat es el màxim.
  *
- * @param {number} min valor mínim
- * @param {number} max valor máxim
- * @returns {number} El nombre si està dins del limit o el valor corresponent al limit
+ * @param {number} min - valor mínim
+ * @param {number} max - valor máxim
+ * @returns {number} - El nombre si està dins del limit o el valor corresponent al limit
  */
 Number.prototype.clamp = function (min, max) {
     return Math.min(Math.max(this, min), max);
+};
+
+/**
+ * Aquesta utilitat afegeix el mètode contains al prototip de Array per permetre comprov
+ *
+ * @param {*} needle - objecte a cercar dins del array
+ * @returns {boolean} - cert si es troba o false en cas contrari
+ */
+Array.prototype.contains = function (needle) {
+    for (var i in this) {
+        if (this[i] == needle) return true;
+    }
+    return false;
 };
 
 
@@ -22,18 +35,20 @@ var IOC_INVADERS = function (config) {
     var gameManager,
         assetManager,
 
-        gameCanvas,
+        gameCanvas,// TODO: per acabar de definir si aquests dos valors els injectem on calgui o els deixem globals (ara es fa servir de les dues maneras)
         gameContext,
 
+        updatedSprites = [],// TODO: cercar altre solució, això hauria de ser una propietar stàtica de Sprite en ES6
+
         entitiesRepository = (function () {
-            var enemies = {},
+            var entities = {},
 
                 addEntity = function (name, data) {
                     // Create sprite
-                    var enemy = data;
+                    var entity = data;
 
                     console.log(data.sprite.id);
-                    enemy.sprite = spriteConstructor({
+                    entity.sprite = spriteConstructor({ // TODO la informaicó del sprite s'ha de treure dels assets i no del entity-data
                         context: gameContext,
                         image: assetManager.getAsset(data.sprite.id),
                         numberOfFrames: data.sprite.numberOfFrames,
@@ -41,11 +56,11 @@ var IOC_INVADERS = function (config) {
                         loop: data.sprite.loop
                     });
 
-                    enemy.move = strategiesRepository.get(data.move);
+                    if (data.move) {
+                        entity.move = strategiesRepository.get(data.move);
+                    }
 
-
-                    enemies[name] = enemy;
-                    // TODO: Instanciar canó, fire();
+                    entities[name] = entity;
                 };
 
 
@@ -63,7 +78,7 @@ var IOC_INVADERS = function (config) {
 
                 // Retorna un nou objecte amb les propietats originals més les mesclades
                 get: function (name, position, speed) {
-                    var entity = enemies[name];
+                    var entity = entities[name];
                     if (!entity) {
                         console.error("No se encuentra el enemigo: ", entity);
                     }
@@ -168,7 +183,6 @@ var IOC_INVADERS = function (config) {
 
                 }
 
-
             };
 
             return {
@@ -178,6 +192,62 @@ var IOC_INVADERS = function (config) {
             }
 
         }()),
+
+
+        inputController = (function () {
+            // TODO: Código para el InputController
+            // The keycodes that will be mapped when a user presses a button.
+            // Original code by Doug McInnes
+            var KEY_CODES = {
+                    32: 'space',
+                    37: 'left',
+                    38: 'up',
+                    39: 'right',
+                    40: 'down'
+                },
+
+            // Creates the array to hold the KEY_CODES and sets all their values
+            // to false. Checking true/flase is the quickest way to check status
+            // of a key press and which one was pressed when determining
+            // when to move and which direction.
+                KEY_STATUS = {};
+            for (var code in KEY_CODES) {
+                KEY_STATUS[KEY_CODES[code]] = false;
+            }
+            /**
+             * Sets up the document to listen to onkeydown events (fired when
+             * any key on the keyboard is pressed down). When a key is pressed,
+             * it sets the appropriate direction to true to let us know which
+             * key it was.
+             */
+            document.onkeydown = function (e) {
+                // Firefox and opera use charCode instead of keyCode to
+                // return which key was pressed.
+                var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+                if (KEY_CODES[keyCode]) {
+                    e.preventDefault();
+                    KEY_STATUS[KEY_CODES[keyCode]] = true;
+                }
+            };
+            /**
+             * Sets up the document to listen to ownkeyup events (fired when
+             * any key on the keyboard is released). When a key is released,
+             * it sets teh appropriate direction to false to let us know which
+             * key it was.
+             */
+            document.onkeyup = function (e) {
+                var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+                if (KEY_CODES[keyCode]) {
+                    e.preventDefault();
+                    KEY_STATUS[KEY_CODES[keyCode]] = false;
+                }
+            };
+
+            return {
+                KEY_CODES: KEY_CODES,
+                KEY_STATUS: KEY_STATUS
+            }
+        })(),
 
         poolConstructor = function (maxSize, generator, config) {
             var that = {},
@@ -364,45 +434,125 @@ var IOC_INVADERS = function (config) {
             return that;
         },
 
+        playerConstructor = function (options) {
+            var that = spaceshipConstructor(options);
+
+            //that.start(entitiesRepository.get('player', {x: 10, y: 256}, {x: 3, y: 3})) // TODO la posició inicial
+            that.start(entitiesRepository.get('player', options.position, options.speed)) // TODO la posició inicial
+
+            that.shot= function (cannon) {
+                var origin;
+
+                if (that.lastShot>cannon.fireRate) {
+                    that.lastShot = 0;
+                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
+                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
+                }
+
+
+            };
+
+            that.lastShot = 0;
+
+            that.getInput = function () {
+                if (inputController.KEY_STATUS.left) {
+                    that.position.x -= that.speed.x;
+
+                } else if (inputController.KEY_STATUS.right) {
+                    that.position.x += that.speed.x;
+
+                }
+
+                if (inputController.KEY_STATUS.up) {
+                    that.position.y -= that.speed.y;
+
+                } else if (inputController.KEY_STATUS.down) {
+                    that.position.y += that.speed.y;
+                }
+
+                if (inputController.KEY_STATUS.space && !that.isColliding) {
+                    this.fire();
+                }
+
+                // Evitem que surti de la pantalla
+                this.position.x = this.position.x.clamp(0, gameCanvas.width - this.sprite.size.width);
+                this.position.y = this.position.y.clamp(0, gameCanvas.height - this.sprite.size.height);
+
+            };
+
+
+            // Sobrescrivim aquesta funció
+            that.update = function () {
+                that.lastShot++;
+
+                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
+                if (this.isColliding) {
+                    this.explosion.get();
+                    return true;
+                }
+
+                // TODO afegir el codi del input controller
+                this.getInput();
+
+                // TODO: Aquest es el codi corresponent al mètode privat updateSprite()
+                this.updateSprite();
+                //
+                //this.sprite.position = this.position;
+                //this.sprite.update();
+
+                // TODO: Aquest es el codi corresponent al mètode privar render();
+                this.render();
+                //this.sprite.render()
+
+                //console.log(this.position);
+            };
+
+            console.log(that);
+
+            return that;
+        },
 
         spaceshipConstructor = function (options) {
             var that = {},
 
-                updateSprite = function () {
-                    that.sprite.position = that.position;
-                    that.sprite.update();
-                },
+                errorMessage = function () {
+                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
+                };
 
-                render = function () {
-                    that.sprite.render()
-                },
+            that.move = errorMessage;
 
-                errorMessage = function () { //TODO: Reactivar
-                    //console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
-                },
+            that.updateSprite = function () {
+                that.sprite.position = that.position;
+                that.sprite.update();
 
-                fire = function () {
-                    if (Array.isArray(that.cannon)) {
+            };
 
-                        for (var i = 0; i < that.cannon.length; i++) {
-                            shot(that.cannon[i]);
-                        }
-                    } else if (that.cannon) {
-                        shot(that.cannon);
+            that.render = function () {
+                that.sprite.render()
+            };
 
-                    }
-                },
-
-                shot = function (cannon) {
-                    var origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y}
-                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
-                },
-
-                move = errorMessage;
 
             that.bulletPool = options.pool.bullet;
-            //console.log(options.bulletPool, that.bulletPool);
-            //alert("Stop");
+
+            that.fire = function () { // @protected
+                if (Array.isArray(that.cannon)) {
+                    for (var i = 0; i < that.cannon.length; i++) {
+                        that.shot(that.cannon[i]);
+                    }
+                } else if (that.cannon) {
+                    that.shot(that.cannon);
+
+                }
+            };
+
+            that.shot = function (cannon) { // @protected
+                var origin;
+
+                if (Math.random() < cannon.fireRate / 100) {
+                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
+                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
+                }
+            };
 
             that.alive = false;
 
@@ -413,18 +563,19 @@ var IOC_INVADERS = function (config) {
 
                 that.type = data.type;
                 that.position = data.position;
-                that.chanceToFire = data.chanceToFire;
                 that.sprite = data.sprite;
                 that.cannon = data.cannon;
                 that.explosion = data.explosion;
 
                 that.speed = data.speed;
-                that.points = data.points; // al start
+                that.points = data.points;
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = data.extra || {};
-                move = data.move.bind(that);
-                //fire = data.fire.bind(that); TODO
+                if (data.move) {
+                    that.move = data.move.bind(that);
+                }
+
                 return that;
             };
 
@@ -434,16 +585,15 @@ var IOC_INVADERS = function (config) {
 
                 that.type = null;
                 that.position = {x: 0, y: 0};
-                that.chanceToFire = 0;
                 that.sprite = null;
 
                 that.speed = {x: 0, y: 0};
                 that.points = 0;
-                that.cannon = {};
+                that.cannon = null;
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = null;
-                move = errorMessage;
+                that.move = errorMessage;
 
             };
 
@@ -459,13 +609,10 @@ var IOC_INVADERS = function (config) {
                     return true;
                 }
 
-                updateSprite();
+                that.updateSprite();
 
-                if (Math.random() < that.chanceToFire) {
-                    fire();
-                }
-
-                move();
+                that.move();
+                that.fire();
 
                 // Sa ha sortit de la pantalla s'elimina. Deixem 1 pantalla de marge per poder fer el desplegament fora de la pantalla
                 if (this.position.x >= gameCanvas.width * 2
@@ -476,7 +623,7 @@ var IOC_INVADERS = function (config) {
                 }
 
 
-                render();
+                that.render();
             };
 
             return that;
@@ -487,21 +634,18 @@ var IOC_INVADERS = function (config) {
             var that = {},
                 layers = {},
                 context = options.context,
-                canvas = options.canvas,
 
-                move = function(layer) {
-                    layer.position.x += layer.speed.x;
-                    layer.position.y += layer.speed.y;
+                move = function (layer) {
+                    layer.position.x += layer.speed.x * that.speed.value;
+                    layer.position.y += layer.speed.y * that.speed.value;
 
-                    if (layer.position.x<-layer.image.width || layer.position.x>layer.image.width) {
+                    if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
                         layer.position.x = 0;
                     }
 
-                    if (layer.position.y<-layer.image.height || layer.position.y>layer.image.height) {
+                    if (layer.position.y < -layer.image.height || layer.position.y > layer.image.height) {
                         layer.position.y = 0;
                     }
-
-
 
                 },
 
@@ -511,25 +655,25 @@ var IOC_INVADERS = function (config) {
                         layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
 
                     // Segons la direcció dibuixem pantalles extres a les posicions necessaries
-                    if (layer.speed.x < 0) {
+                    if (layer.speed.x * that.speed.value < 0) {
                         context.drawImage(
                             layer.image, layer.position.x + layer.image.width,
                             layer.position.y, layer.image.width, layer.image.height);
                     }
 
-                    if (layer.speed.x > 0) {
+                    if (layer.speed.x * that.speed.value > 0) {
                         context.drawImage(
                             layer.image, layer.position.x - layer.image.width,
                             layer.position.y, layer.image.width, layer.image.height);
                     }
 
-                    if (layer.speed.y < 0) {
+                    if (layer.speed.y * that.speed.value < 0) {
                         context.drawImage(
                             layer.image, layer.position.x, layer.position.y + layer.image.height,
                             layer.image.width, layer.image.height);
                     }
 
-                    if (layer.speed.y > 0) {
+                    if (layer.speed.y * that.speed.value > 0) {
                         context.drawImage(
                             layer.image, layer.position.x,
                             layer.position.y - layer.image.height, layer.image.width, layer.image.height);
@@ -537,7 +681,9 @@ var IOC_INVADERS = function (config) {
 
                 };
 
+
             that.update = function () {
+                that.speed.update();
                 for (var i = 0; i < layers.length; i++) {
                     move(layers[i]);
                     render(layers[i]);
@@ -548,16 +694,59 @@ var IOC_INVADERS = function (config) {
 
             that.start = function (data) {
                 layers = data.layers;
-                console.log(layers);
+
+                that.speed.value = data.speed.start || 0;
+                that.speed.target = that.speed.target || that.speed.value;
 
                 for (var i = 0; i < layers.length; i++) {
+                    layers[i].image = assetManager.getAsset(layers[i].id);
                     layers[i].position = {x: 0, y: 0}
                 }
             };
 
+            that.speed = {
+                value: 1,
+                target: 1,
+                acceleration: 0.02,
+
+                accelerate: function (amount) {
+                    if (amount > 0) {
+                        that.speed.acceleration += amount;
+                    } else {
+                        console.error("La acceleració ha de ser un nombre positiu, si vols decelerar crida decelerate()");
+                    }
+
+                },
+                decelerate: function (amount) {
+                    if (amount > 0) {
+                        that.speed.acceleration += amount;
+                    } else {
+                        console.error("La acceleració ha de ser un nombre positiu, si vols accelerar crida accelerate()");
+                    }
+                    that.speed.acceleration -= amount;
+                },
+                reset: function () {
+                    that.speed.value = 0;
+                    that.speed.target = 0;
+                    that.speed.acceleration = 0.002;
+                },
+
+                update: function () {
+                    if (this.value < this.target) {
+                        this.value += this.acceleration;
+                    } else if (this.value > this.target) {
+                        this.value -= this.acceleration;
+                    }
+                }
+
+
+            };
+
             that.clear = function () {
                 layers = {};
+                that.speed.reset();
             };
+
 
             return that;
         },
@@ -581,6 +770,13 @@ var IOC_INVADERS = function (config) {
             that.isDone = false;
 
             that.update = function () {
+
+                // TODO: Cercar una altre manera de fer-ho, això es necessari per actualitzar només 1 vegada per frame els sprites
+                if (updatedSprites.contains(that)) {
+                    return;
+                } else {
+                    updatedSprites.push(that);
+                }
 
                 tickCount += 1;
 
@@ -685,6 +881,11 @@ var IOC_INVADERS = function (config) {
 
         gameManagerConstructor = function () {
             var that = {},
+                levels = {},
+                currentLevel,
+                score,
+                distance, // Relativa al nivell actual
+                nextWave, // Relativa al nivell actual
 
                 enemyPool,
                 enemyShotPool,
@@ -693,6 +894,8 @@ var IOC_INVADERS = function (config) {
                 soundPool,
 
                 background,
+
+                player,
 
                 initEnvironment = function (data) { // TODO: Esta puede ser privada, o ser sustituida por init
                     gameCanvas = document.getElementById(data.canvas.game);
@@ -713,15 +916,28 @@ var IOC_INVADERS = function (config) {
 
                     that.loadAssets(data.assets);
 
+                },
 
-                };
+                ui = (function () {
+                    var scoreText = document.getElementById('score'),
+                        distanceText = document.getElementById('distance'),
+                        activesText = document.getElementById('actives');
+
+                    return {
+                        update: function () {
+                            scoreText.innerHTML = score;
+                            distanceText.innerHTML = distance;
+                            activesText.innerHTML = enemyPool.actives;
+                        }
+                    };
+                })();
 
 
             that.init = function () {
                 console.log("GameManager#init");
                 // Iniciem el joc indicant la url des de on es descarregaran les dades del joc.
 
-                that.loadData(config.game_data_url, initEnvironment);
+                that.loadData(config.asset_data_url, initEnvironment);
 
             };
 
@@ -771,82 +987,162 @@ var IOC_INVADERS = function (config) {
             };
 
             that.loadLevelsData = function () {
-                //that.loadData(config.levels_data_url, function (data) {
-                //    console.log(data);
-
-
-                background = backgroundConstructor({
-                    context: gameContext,
-                    canvas: gameCanvas // TODO sembla innecessari
+                that.loadData(config.levels_data_url, function (data) {
+                    console.log(data);
+                    levels = data.levels;
+                    that.start();
                 });
-
-                background.start(
-                    {
-                        layers: [
-                            {
-                                image: assetManager.getAsset('bg_layer_1'),
-                                speed: {x: 1, y: 0}
-                            },
-                            {
-                                image: assetManager.getAsset('bg_layer_2'),
-                                speed: {x: 2, y: 0}
-                            },
-                            {
-                                image: assetManager.getAsset('bg_layer_3'),
-                                speed: {x: 4, y: 0}
-                            },
-                            {
-                                image: assetManager.getAsset('bg_layer_4'),
-                                speed: {x: 8, y: 0}
-                            }
-                        ]
-                    });
-
-
-                that.start();
-                //});
             };
 
 
             that.start = function () {
                 console.log("GameManager#start");
 
-                enemyPool.instantiate('alien_a', {x: 900, y: 100}, {x: -2, y: -2});
-                enemyPool.instantiate('alien_b', {x: 900, y: 200}, {x: -2, y: 0});
-                enemyPool.instantiate('alien_c', {x: 900, y: 300}, {x: -2, y: -2});
-                enemyPool.instantiate('alien_d', {x: 900, y: 400}, {x: 0, y: -2});
+                background = backgroundConstructor({
+                    context: gameContext
+                });
 
-                playerShotPool.instantiate('plasma_shot_1', {x: 10, y: 100}, {x: 1, y: 0});
-                playerShotPool.instantiate('plasma_shot_2', {x: 10, y: 150}, {x: 1.5, y: 0});
-                playerShotPool.instantiate('plasma_shot_3', {x: 10, y: 200}, {x: 2.5, y: 0});
-                playerShotPool.instantiate('plasma_shot_4', {x: 10, y: 250}, {x: 3, y: 0});
-                playerShotPool.instantiate('plasma_shot_5', {x: 10, y: 300}, {x: 3.5, y: 0});
-                playerShotPool.instantiate('hot_plasma_shot', {x: 10, y: 350}, {x: 2.5, y: 0});
 
-                explosionPool.instantiate('enemy_explosion', {x: 400, y: 400}, {x: 0, y: 0});
-                explosionPool.instantiate('player_explosion', {x: 450, y: 400}, {x: 0, y: 0});
+                player = playerConstructor(
+                    {
+                        pool: {bullet: playerShotPool},
+                        position: {x: 10, y: 256},
+                        speed: {x: 3, y: 3}
+                    });
 
-                gameLoop();
+                //player = entitiesRepository.get('player', {x: 10, y: 256}, {x: 0, y: 0});
+
+                console.log(player);
+
+                //enemyPool.instantiate('alien_a', {x: 900, y: 100}, {x: -2, y: -2});
+                //enemyPool.instantiate('alien_b', {x: 900, y: 200}, {x: -2, y: 0});
+                //enemyPool.instantiate('alien_c', {x: 900, y: 300}, {x: -2, y: -2});
+                //enemyPool.instantiate('alien_d', {x: 900, y: 400}, {x: 0, y: -2});
+                //
+                //playerShotPool.instantiate('plasma_shot_1', {x: 10, y: 100}, {x: 1, y: 0});
+                //playerShotPool.instantiate('plasma_shot_2', {x: 10, y: 150}, {x: 1.5, y: 0});
+                //playerShotPool.instantiate('plasma_shot_3', {x: 10, y: 200}, {x: 2.5, y: 0});
+                //playerShotPool.instantiate('plasma_shot_4', {x: 10, y: 250}, {x: 3, y: 0});
+                //playerShotPool.instantiate('plasma_shot_5', {x: 10, y: 300}, {x: 3.5, y: 0});
+                //playerShotPool.instantiate('hot_plasma_shot', {x: 10, y: 350}, {x: 2.5, y: 0});
+                //
+                //explosionPool.instantiate('enemy_explosion', {x: 400, y: 400}, {x: 0, y: 0});
+                //explosionPool.instantiate('player_explosion', {x: 450, y: 400}, {x: 0, y: 0});
+
+                currentLevel = 0;
+                nextWave = 0;
+                score = 0; // Esto no debe estar en el restart
+                distance = 0;
+
+                that.startLevel(currentLevel);
+
+                gameLoop(); // TODO esto debe ser update()
+
+            };
+
+            that.startLevel = function (level) {
+                // TODO mostrar missatge de benvinguda
+                console.log(levels[level].name);
+                console.log(levels[level].description);
+
+                background.start(levels[level].background);
 
             };
 
 
             function gameLoop() { // TODO: eliminar després de les proves o canviar el nom a update <-- altre opció es fer que desde el gameLoop es cridint els diferents mètodes: Update(), DetectCollisions(), etc.
-
                 //console.log("GameManager#gameLoop");
                 window.requestAnimationFrame(gameLoop);
 
+                updatedSprites = [];
 
-                //that.clear(); // TODO: Això no cal fer-ho servir una vegada estiguin implementats els scrolls
-                // update()
-                // render()
+                distance++;
+                spawner();
+
 
                 background.update();
                 enemyPool.update();
+                player.update();
+
+
                 enemyShotPool.update();
                 playerShotPool.update();
                 explosionPool.update();
 
+                ui.update();
+
+
+            }
+
+            // TODO: Crear un objecte privat distance que s'encarregui de cridar aquest mètodes amb un update() i dedicar
+            // el spwaner realment a spawnejar enemics
+            function spawner() {
+                var waves = levels[currentLevel].waves,
+                    currentWave;
+
+                //console.log("Waves: ", waves.length)
+                if (nextWave < waves.length && distance >= waves[nextWave].distance) {
+                    currentWave = waves[nextWave];
+
+                    console.log("Spanweando wave " + nextWave);
+
+                    for (var i = 0; i < currentWave.spawns.length; i++) {
+                        if (!currentWave.spawns[i].formation) { // Si no te formació es tracta d'un enemic unic
+                            spawnEnemy(currentWave.spawns[i]);
+                        } else {
+                            spawnFormation(currentWave.spawns[i]);
+                        }
+                    }
+
+                    nextWave++;
+                }
+
+                if (distance > levels[currentLevel].end) {
+                    console.log("Level ended");
+                }
+            }
+
+            function spawnEnemy(enemy) {
+                enemyPool.instantiate(enemy.type, enemy.position, enemy.speed);
+            }
+
+            function spawnFormation(wave) {
+                switch (wave.formation.type) {
+                    case "columns":
+                        console.log("columns");
+
+                        // TODO aquestes variables s'han de poder eliminar en la seva major part. COMPTE: s'ha de crear una nova posició per cada objecte que instanciem o es canvien totes a l'hora.
+                        var originPosition = {x: wave.position.x, y: wave.position.y};
+                        var spacer = wave.formation.spacer;
+                        var nextColumn = originPosition.y + wave.formation.column_height;
+                        var amount = wave.formation.amount;
+                        var currentPosition = wave.position;
+
+
+                        for (var i = 0; i < amount; i++) {
+
+                            enemyPool.instantiate(wave.type, {
+                                x: currentPosition.x,
+                                y: currentPosition.y
+                            }, wave.speed);
+
+
+                            currentPosition.y += spacer;
+
+                            if (currentPosition.y >= nextColumn) {
+
+                                currentPosition.x += spacer;
+                                currentPosition.y = originPosition.y;
+                            }
+
+                        }
+
+
+                        break;
+
+                    default:
+                        console.log("Error, no es reconeix el tipus de formació")
+                }
 
             }
 
@@ -883,6 +1179,7 @@ var IOC_INVADERS = function (config) {
         start: init
     }
 };
+
 
 
 

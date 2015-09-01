@@ -1,9 +1,32 @@
 [
   {
+    "name": "player",
+    "data": {
+      "type": "player",
+      "sprite": {
+        "id": "spaceship",
+        "numberOfFrames": 1,
+        "ticksPerFrame": 1
+      },
+      "explosion": null,
+      "cannon": {
+        "bullet": "plasma_shot_1",
+        "fireRate": 15,
+        "position": {
+          "x": 30,
+          "y": 10
+        },
+        "direction": {
+          "x": 5,
+          "y": 0
+        }
+      }
+    }
+  },
+  {
     "name": "alien_a",
     "data": {
       "type": "enemy",
-      "chanceToFire": 0.01,
       "sprite": {
         "id": "alien_a",
         "numberOfFrames": 6,
@@ -12,13 +35,14 @@
       "explosion": null,
       "points": 10,
       "cannon": {
-        "bullet": "zigzag_shot",
+        "bullet": "standard_shot",
+        "fireRate": 1,
         "position": {
           "x": -5,
           "y": 14
         },
         "direction": {
-          "x": -2.5,
+          "x": -5,
           "y": 0
         }
       },
@@ -29,7 +53,6 @@
     "name": "alien_b",
     "data": {
       "type": "enemy",
-      "chanceToFire": 0.07,
       "sprite": {
         "id": "alien_b",
         "numberOfFrames": 4,
@@ -39,6 +62,7 @@
       "points": 15,
       "cannon": {
         "bullet": "zigzag_shot",
+        "fireRate": 7,
         "position": {
           "x": -5,
           "y": 14
@@ -55,7 +79,6 @@
     "name": "alien_c",
     "data": {
       "type": "enemy",
-      "chanceToFire": 0.05,
       "sprite": {
         "id": "alien_c",
         "numberOfFrames": 3,
@@ -65,6 +88,7 @@
       "points": 15,
       "cannon": {
         "bullet": "standard_shot",
+        "fireRate": 5,
         "position": {
           "x": -5,
           "y": 14
@@ -81,7 +105,6 @@
     "name": "alien_d",
     "data": {
       "type": "enemy",
-      "chanceToFire": 0.5,
       "sprite": {
         "id": "alien_d",
         "numberOfFrames": 2,
@@ -92,6 +115,7 @@
       "cannon": [
         {
           "bullet": "wave_shot_a",
+          "fireRate": 50,
           "position": {
             "x": -5,
             "y": 2
@@ -103,6 +127,7 @@
         },
         {
           "bullet": "wave_shot_b",
+          "fireRate": 50,
           "position": {
             "x": -5,
             "y": 40
@@ -122,8 +147,8 @@
       "type": "shot",
       "sprite": {
         "id": "bullet_enemy",
-        "numberOfFrames": 1,
-        "ticksPerFrame": 1
+        "numberOfFrames": 4,
+        "ticksPerFrame": 16
       },
       "shot": null,
       "move": "movement_pattern_b"
@@ -135,8 +160,8 @@
       "type": "shot",
       "sprite": {
         "id": "bullet_enemy",
-        "numberOfFrames": 1,
-        "ticksPerFrame": 1
+        "numberOfFrames": 4,
+        "ticksPerFrame": 16
       },
       "shot": null,
       "move": "movement_pattern_c"
@@ -148,8 +173,8 @@
       "type": "shot",
       "sprite": {
         "id": "bullet_enemy",
-        "numberOfFrames": 1,
-        "ticksPerFrame": 1
+        "numberOfFrames": 4,
+        "ticksPerFrame": 20
       },
       "shot": null,
       "move": "movement_pattern_d"
@@ -161,8 +186,8 @@
       "type": "shot",
       "sprite": {
         "id": "bullet_enemy",
-        "numberOfFrames": 1,
-        "ticksPerFrame": 1
+        "numberOfFrames": 4,
+        "ticksPerFrame": 16
       },
       "shot": null,
       "move": "movement_pattern_a"
@@ -254,7 +279,7 @@
         "id": "explosion_enemy",
         "numberOfFrames": 8,
         "ticksPerFrame": 6,
-        "loop":false
+        "loop": false
       }
     }
   },
@@ -266,7 +291,7 @@
         "id": "explosion_player",
         "numberOfFrames": 5,
         "ticksPerFrame": 6,
-        "loop":false
+        "loop": false
       }
     }
   }

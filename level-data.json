@@ -1,0 +1,73 @@
+{
+  "levels": [
+    {
+      "name": "Nivell 1",
+      "description": "Aquest es el primer nivell del joc.",
+      "background": {
+        "layers": [
+          {
+            "id": "bg_layer_1",
+            "speed": {
+              "x": -1,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_2",
+            "speed": {
+              "x": -2,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_3",
+            "speed": {
+              "x": -4,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_4",
+            "speed": {
+              "x": -8,
+              "y": 0
+            }
+          }
+        ],
+        "speed": {
+          "start": 0,
+          "target": 1
+        }
+      },
+      "waves": [
+        {
+          "distance": 100,
+          "spawns": [
+            {
+              "type": "alien_a",
+              "formation": {
+                "type": "columns",
+                "amount": 21,
+                "column_height": 350,
+                "spacer": 50
+              },
+              "position": {
+                "x": 1024,
+                "y": 81
+              },
+              "speed": {
+                "x": -1,
+                "y": 0
+              }
+            }
+          ]
+        },
+        {
+          "distance": 200,
+          "spawns": []
+        }
+      ],
+      "end": 500
+    }
+  ]
+}
