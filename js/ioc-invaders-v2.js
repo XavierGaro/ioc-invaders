@@ -20,6 +20,7 @@ Number.prototype.clamp = function (min, max) {
  * @returns {boolean} - cert si es troba o false en cas contrari
  */
 Array.prototype.contains = function (needle) {
+    //console.log("Mida d'aquest array: ", this.length);
     for (var i in this) {
         if (this[i] == needle) return true;
     }
@@ -34,6 +35,7 @@ Array.prototype.contains = function (needle) {
 var IOC_INVADERS = function (config) {
     var gameManager,
         assetManager,
+        gametime,
 
         gameCanvas,// TODO: per acabar de definir si aquests dos valors els injectem on calgui o els deixem globals (ara es fa servir de les dues maneras)
         gameContext,
@@ -50,7 +52,6 @@ var IOC_INVADERS = function (config) {
                     var entity = data;
 
                     entity.sprite = spriteConstructor({ // TODO la informaicó del sprite s'ha de treure dels assets i no del entity-data
-                        context: gameContext,
                         image: assetManager.getAsset(data.sprite.id),
                         numberOfFrames: data.sprite.numberOfFrames,
                         ticksPerFrame: data.sprite.ticksPerFrame,
@@ -386,7 +387,8 @@ var IOC_INVADERS = function (config) {
 
                 that.type = data.type;
                 that.position = data.position;
-                that.sprite = data.sprite;
+                that.sprite = assetManager.getSprite('bullet_enemy');
+                //that.sprite = assetManager.getSprite(data.sprite);;
                 //soundPool.get(data.sound);// TODO sound, ha de reproduir-se aqui mateix!
 
                 that.speed = data.speed;
@@ -669,10 +671,9 @@ var IOC_INVADERS = function (config) {
 
         },
 
-        backgroundConstructor = function (options) {
+        backgroundConstructor = function () {
             var that = {},
                 layers = {},
-                context = options.context,
 
                 move = function (layer) {
                     layer.position.x += layer.speed.x * that.speed.value;
@@ -690,30 +691,30 @@ var IOC_INVADERS = function (config) {
 
                 render = function (layer) {
 
-                    context.drawImage(
+                    gameContext.drawImage(
                         layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
 
                     // Segons la direcció dibuixem pantalles extres a les posicions necessaries
                     if (layer.speed.x * that.speed.value < 0) {
-                        context.drawImage(
+                        gameContext.drawImage(
                             layer.image, layer.position.x + layer.image.width,
                             layer.position.y, layer.image.width, layer.image.height);
                     }
 
                     if (layer.speed.x * that.speed.value > 0) {
-                        context.drawImage(
+                        gameContext.drawImage(
                             layer.image, layer.position.x - layer.image.width,
                             layer.position.y, layer.image.width, layer.image.height);
                     }
 
                     if (layer.speed.y * that.speed.value < 0) {
-                        context.drawImage(
+                        gameContext.drawImage(
                             layer.image, layer.position.x, layer.position.y + layer.image.height,
                             layer.image.width, layer.image.height);
                     }
 
                     if (layer.speed.y * that.speed.value > 0) {
-                        context.drawImage(
+                        gameContext.drawImage(
                             layer.image, layer.position.x,
                             layer.position.y - layer.image.height, layer.image.width, layer.image.height);
                     }
@@ -775,18 +776,18 @@ var IOC_INVADERS = function (config) {
 
     // TODO: Els sprites han de ser reversibles, la meitat dels frames per  quan es mou a la dreta i la altre mitat per la esquerra
         spriteConstructor = function (options) {
+            //console.log(options);
             var that = {},
                 frameIndex = 0,
-                tickCount = 0,
                 ticksPerFrame = options.ticksPerFrame || 0,
                 numberOfFrames = options.numberOfFrames || 1,
-                context = options.context,
                 image = options.image,
                 width = image.width,
                 height = image.height,
                 loop = options.loop === undefined ? true : options.loop;
 
-
+            that.tickCount = 0;
+            that.lastTick = gametime;
             that.position = options.position || {x: 0, y: 0};
             that.size = {width: width / numberOfFrames, height: height};
             that.isDone = false;
@@ -800,10 +801,11 @@ var IOC_INVADERS = function (config) {
                     updatedSprites.push(that);
                 }
 
-                tickCount += 1;
+                that.tickCount++;
+                that.lastTick = gametime;
 
-                if (tickCount > ticksPerFrame) {
-                    tickCount = 0;
+                if (that.tickCount > ticksPerFrame) {
+                    that.tickCount = 0;
 
                     if (frameIndex < numberOfFrames - 1) {
                         frameIndex += 1;
@@ -825,7 +827,7 @@ var IOC_INVADERS = function (config) {
                     return;
                 }
 
-                context.drawImage(
+                gameContext.drawImage(
                     image,
                     frameIndex * width / numberOfFrames,
                     0,
@@ -847,9 +849,10 @@ var IOC_INVADERS = function (config) {
                 successCount = 0,
                 errorCount = 0,
                 downloadQueue = [],
+                spritesQueue = [],
                 cache = {
                     images: {},
-                    sprites: {},
+                    sprites: {}
                 },
                 updateProgress = function () {
                     if (progressCallback) {
@@ -862,43 +865,98 @@ var IOC_INVADERS = function (config) {
                 downloadQueue.push(asset);
             };
 
-            that.downloadAll = function (callback) {
+            that.queueSprites = function (asset) {
+                spritesQueue.push(asset);
+            };
+
+
+            that.downloadAll = function (callback, args) {
+                var i, j;
+
                 if (downloadQueue.length === 0) {
                     callback();
                 }
 
-                for (var i = 0; i < downloadQueue.length; i++) {
+
+                // Primer descarreguem les imatges
+                for (i = 0; i < downloadQueue.length; i++) {
                     var path = downloadQueue[i].path,
                         id = downloadQueue[i].id,
-                        img = new Image(),
-                        type = downloadQueue[i].type;
+                        img = new Image();
 
                     img.addEventListener("load", function () {
                         successCount += 1;
                         updateProgress();
                         if (that.isDone()) {
-                            callback();
+                            callback(args);
                         }
                     }, false);
                     img.addEventListener("error", function () {
                         errorCount += 1;
                         updateProgress();
                         if (that.isDone()) {
-                            callback();
+                            callback(args);
                         }
                     }, false);
                     img.src = path;
-                    cache[id] = img;
-
+                    cache.images[id] = img;
                 }
+
+                // A continuació generem els sprites;
+                for (i = 0; i < spritesQueue.length; i++) {
+
+                    var sprite = {
+                        id: spritesQueue[i].id,
+                        sprite: [],
+                        actives: []
+                    };
+
+                    var poolSize = spritesQueue[i].numberOfFrames * spritesQueue[i].ticksPerFrame;
+
+                    for (j = 0; j < poolSize; j++) {
+                        sprite.sprite.push(spriteConstructor({
+                                image: that.getAsset(spritesQueue[i].id),
+                                numberOfFrames: spritesQueue[i].numberOfFrames,
+                                ticksPerFrame: spritesQueue[i].ticksPerFrame,
+                                loop: spritesQueue[i].loop === undefined ? true : spritesQueue[i].loop
+                            }
+                        ));
+                    }
+
+                    cache.sprites[sprite.id] = sprite;
+                }
+                //console.log(spritesQueue);
+                //console.log(cache.sprites);
             };
+
 
             that.isDone = function () {
                 return (downloadQueue.length == successCount + errorCount);
             };
 
             that.getAsset = function (id) {
-                return cache[id];
+                return cache.images[id];
+            };
+
+            that.getSprite = function (id) {
+                var sprites = cache.sprites[id].sprite;
+                var older = sprites[0];
+                //console.log(sprites);
+
+                for (var i = 0; i < sprites.length; i++) {
+                    if (sprites[i].tickCount === 0) {
+                        return sprites[i];
+                    } else {
+                        if (sprites[i].lastTick < older.lastTick) {
+                            older = sprites[i].lastTick;
+                        }
+
+
+                    }
+                    //console.log("Ticks:", cache.sprites[id][i].tickCount )
+                }
+                return older;
+                //console.error("No s'ha trobat cap sprite lliure");
             };
 
             return that;
@@ -987,12 +1045,9 @@ var IOC_INVADERS = function (config) {
 
                         transitionScreen: function (callback, time) {
                             time = time || 2000;
-                            //var originalClassName = gameCanvas.className;
-                            gameCanvas.className += " hide-opacity";
                             gameCanvas.style.opacity = 0;
 
                             setTimeout(function () {
-                                //gameCanvas.className = originalClassName;
                                 gameCanvas.style.opacity = 1;
                                 callback();
                             }, time);
@@ -1043,13 +1098,19 @@ var IOC_INVADERS = function (config) {
             };
 
             that.loadAssets = function (assets) {
-                for (var i = 0; i < assets.length; i++) {
-                    assetManager.queueDownload(assets[i]);
+                var i;
+                // Descarreguem les imatges i generem els sprites
+                for (i = 0; i < assets.images.length; i++) {
+                    assetManager.queueDownload(assets.images[i]);
+                }
+                for (i = 0; i < assets.sprites.length; i++) {
+                    assetManager.queueSprites(assets.sprites[i]);
                 }
 
                 assetManager.downloadAll(that.loadEnemiesData);
 
             };
+
 
             that.loadEnemiesData = function () {
                 that.loadData(config.entity_data_url, function (data) {
@@ -1142,6 +1203,7 @@ var IOC_INVADERS = function (config) {
             function gameLoop() { // TODO: eliminar després de les proves o canviar el nom a update <-- altre opció es fer que desde el gameLoop es cridint els diferents mètodes: Update(), DetectCollisions(), etc.
                 window.requestAnimationFrame(gameLoop);
 
+                gametime = Date.now();
                 updatedSprites = [];
 
 
