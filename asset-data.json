@@ -95,6 +95,73 @@
         "id": "bullet_enemy",
         "numberOfFrames": 4,
         "ticksPerFrame": 16
+      },
+       {
+        "id": "bullet_player_1",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 8
+      },
+      {
+        "id": "bullet_player_2",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 6
+      },
+      {
+        "id": "bullet_player_3",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 8
+      },
+      {
+        "id": "bullet_player_4",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 10
+      },
+      {
+        "id": "bullet_player_5",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 12
+      },
+      {
+        "id": "bullet_player_6",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 8
+      },
+      {
+        "id": "explosion_enemy",
+        "numberOfFrames": 8,
+        "ticksPerFrame": 6,
+        "loop": false
+      },
+      {
+        "id": "explosion_player",
+        "numberOfFrames": 5,
+        "ticksPerFrame": 6,
+        "loop": false
+      },
+      {
+        "id": "spaceship",
+        "numberOfFrames": 1,
+        "ticksPerFrame": 1
+      },
+      {
+        "id": "alien_a",
+        "numberOfFrames": 6,
+        "ticksPerFrame": 4
+      },
+      {
+        "id": "alien_b",
+        "numberOfFrames": 4,
+        "ticksPerFrame": 6
+      },
+      {
+        "id": "alien_c",
+        "numberOfFrames": 3,
+        "ticksPerFrame": 8
+      },
+      {
+        "id": "alien_d",
+        "numberOfFrames": 2,
+        "ticksPerFrame": 12
       }
     ]
   },

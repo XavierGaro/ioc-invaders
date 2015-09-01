@@ -3,11 +3,7 @@
     "name": "player",
     "data": {
       "type": "player",
-      "sprite": {
-        "id": "spaceship",
-        "numberOfFrames": 1,
-        "ticksPerFrame": 1
-      },
+      "sprite": "spaceship",
       "explosion": null,
       "cannon": {
         "bullet": "plasma_shot_1",
@@ -27,11 +23,7 @@
     "name": "alien_a",
     "data": {
       "type": "enemy",
-      "sprite": {
-        "id": "alien_a",
-        "numberOfFrames": 6,
-        "ticksPerFrame": 4
-      },
+      "sprite": "alien_a",
       "explosion": null,
       "points": 10,
       "cannon": {
@@ -53,11 +45,7 @@
     "name": "alien_b",
     "data": {
       "type": "enemy",
-      "sprite": {
-        "id": "alien_b",
-        "numberOfFrames": 4,
-        "ticksPerFrame": 6
-      },
+      "sprite": "alien_b",
       "explosion": null,
       "points": 15,
       "cannon": {
@@ -79,11 +67,7 @@
     "name": "alien_c",
     "data": {
       "type": "enemy",
-      "sprite": {
-        "id": "alien_c",
-        "numberOfFrames": 3,
-        "ticksPerFrame": 8
-      },
+      "sprite": "alien_c",
       "explosion": null,
       "points": 15,
       "cannon": {
@@ -105,11 +89,7 @@
     "name": "alien_d",
     "data": {
       "type": "enemy",
-      "sprite": {
-        "id": "alien_d",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 12
-      },
+      "sprite": "alien_d",
       "explosion": null,
       "points": 15,
       "cannon": [
@@ -145,11 +125,7 @@
     "name": "standard_shot",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_enemy",
-        "numberOfFrames": 4,
-        "ticksPerFrame": 16
-      },
+      "sprite": "bullet_enemy",
       "shot": null,
       "move": "movement_pattern_b"
     }
@@ -158,11 +134,7 @@
     "name": "wave_shot_a",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_enemy",
-        "numberOfFrames": 4,
-        "ticksPerFrame": 16
-      },
+      "sprite": "bullet_enemy",
       "shot": null,
       "move": "movement_pattern_c"
     }
@@ -171,11 +143,7 @@
     "name": "wave_shot_b",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_enemy",
-        "numberOfFrames": 4,
-        "ticksPerFrame": 20
-      },
+      "sprite": "bullet_enemy",
       "shot": null,
       "move": "movement_pattern_d"
     }
@@ -184,11 +152,7 @@
     "name": "zigzag_shot",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_enemy",
-        "numberOfFrames": 4,
-        "ticksPerFrame": 16
-      },
+      "sprite": "bullet_enemy",
       "shot": null,
       "move": "movement_pattern_a"
     }
@@ -197,11 +161,7 @@
     "name": "plasma_shot_1",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_player_1",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 8
-      },
+      "sprite": "bullet_player_1",
       "shot": null,
       "move": "movement_pattern_b"
     }
@@ -210,11 +170,7 @@
     "name": "plasma_shot_2",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_player_2",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 6
-      },
+      "sprite": "bullet_player_2",
       "shot": null,
       "move": "movement_pattern_b"
     }
@@ -223,11 +179,7 @@
     "name": "plasma_shot_3",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_player_3",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 8
-      },
+      "sprite": "bullet_player_3",
       "shot": null,
       "move": "movement_pattern_b"
     }
@@ -236,11 +188,7 @@
     "name": "plasma_shot_4",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_player_4",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 10
-      },
+      "sprite": "bullet_player_4",
       "shot": null,
       "move": "movement_pattern_b"
     }
@@ -249,11 +197,7 @@
     "name": "plasma_shot_5",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_player_5",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 12
-      },
+      "sprite": "bullet_player_5",
       "shot": null,
       "move": "movement_pattern_b"
     }
@@ -262,11 +206,7 @@
     "name": "hot_plasma_shot",
     "data": {
       "type": "shot",
-      "sprite": {
-        "id": "bullet_player_6",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 8
-      },
+      "sprite": "bullet_player_6",
       "shot": null,
       "move": "movement_pattern_c"
     }
@@ -275,24 +215,14 @@
     "name": "enemy_explosion",
     "data": {
       "type": "explosion",
-      "sprite": {
-        "id": "explosion_enemy",
-        "numberOfFrames": 8,
-        "ticksPerFrame": 6,
-        "loop": false
-      }
+      "sprite": "explosion_enemy"
     }
   },
   {
     "name": "player_explosion",
     "data": {
       "type": "explosion",
-      "sprite": {
-        "id": "explosion_player",
-        "numberOfFrames": 5,
-        "ticksPerFrame": 6,
-        "loop": false
-      }
+      "sprite": "explosion_player"
     }
   }
 ]

@@ -51,12 +51,14 @@ var IOC_INVADERS = function (config) {
                     // Create sprite
                     var entity = data;
 
-                    entity.sprite = spriteConstructor({ // TODO la informaicó del sprite s'ha de treure dels assets i no del entity-data
-                        image: assetManager.getAsset(data.sprite.id),
-                        numberOfFrames: data.sprite.numberOfFrames,
-                        ticksPerFrame: data.sprite.ticksPerFrame,
-                        loop: data.sprite.loop
-                    });
+                    entity.sprite = data.sprite;
+
+                    //entity.sprite = spriteConstructor({ // TODO la informaicó del sprite s'ha de treure dels assets i no del entity-data
+                    //    image: assetManager.getAsset(data.sprite.id),
+                    //    numberOfFrames: data.sprite.numberOfFrames,
+                    //    ticksPerFrame: data.sprite.ticksPerFrame,
+                    //    loop: data.sprite.loop
+                    //});
 
                     if (data.move) {
                         entity.move = strategiesRepository.get(data.move);
@@ -322,7 +324,7 @@ var IOC_INVADERS = function (config) {
                 that.alive = true;
                 that.type = data.type;
                 that.position = data.position;
-                that.sprite = data.sprite;
+                that.sprite = assetManager.getSprite(data.sprite);
                 that.sprite.isDone = false;
                 //soundPool.get(that.sound) // TODO sound, s'ha de reproduir-se aqui mateix!
                 return that;
@@ -387,7 +389,7 @@ var IOC_INVADERS = function (config) {
 
                 that.type = data.type;
                 that.position = data.position;
-                that.sprite = assetManager.getSprite('bullet_enemy');
+                that.sprite = assetManager.getSprite(data.sprite);
                 //that.sprite = assetManager.getSprite(data.sprite);;
                 //soundPool.get(data.sound);// TODO sound, ha de reproduir-se aqui mateix!
 
@@ -585,7 +587,7 @@ var IOC_INVADERS = function (config) {
 
                 that.type = data.type;
                 that.position = data.position;
-                that.sprite = data.sprite;
+                that.sprite = assetManager.getSprite(data.sprite);
                 that.cannon = data.cannon;
                 that.explosion = data.explosion;
 
@@ -941,7 +943,6 @@ var IOC_INVADERS = function (config) {
             that.getSprite = function (id) {
                 var sprites = cache.sprites[id].sprite;
                 var older = sprites[0];
-                //console.log(sprites);
 
                 for (var i = 0; i < sprites.length; i++) {
                     if (sprites[i].tickCount === 0) {
@@ -951,12 +952,10 @@ var IOC_INVADERS = function (config) {
                             older = sprites[i].lastTick;
                         }
 
-
                     }
                     //console.log("Ticks:", cache.sprites[id][i].tickCount )
                 }
                 return older;
-                //console.error("No s'ha trobat cap sprite lliure");
             };
 
             return that;
