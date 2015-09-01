@@ -53,13 +53,6 @@ var IOC_INVADERS = function (config) {
 
                     entity.sprite = data.sprite;
 
-                    //entity.sprite = spriteConstructor({ // TODO la informaicó del sprite s'ha de treure dels assets i no del entity-data
-                    //    image: assetManager.getAsset(data.sprite.id),
-                    //    numberOfFrames: data.sprite.numberOfFrames,
-                    //    ticksPerFrame: data.sprite.ticksPerFrame,
-                    //    loop: data.sprite.loop
-                    //});
-
                     if (data.move) {
                         entity.move = strategiesRepository.get(data.move);
                     }
@@ -927,8 +920,6 @@ var IOC_INVADERS = function (config) {
 
                     cache.sprites[sprite.id] = sprite;
                 }
-                //console.log(spritesQueue);
-                //console.log(cache.sprites);
             };
 
 
@@ -949,11 +940,10 @@ var IOC_INVADERS = function (config) {
                         return sprites[i];
                     } else {
                         if (sprites[i].lastTick < older.lastTick) {
-                            older = sprites[i].lastTick;
+                            older = sprites[i];
                         }
 
                     }
-                    //console.log("Ticks:", cache.sprites[id][i].tickCount )
                 }
                 return older;
             };
