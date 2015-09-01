@@ -2,7 +2,7 @@
   "levels": [
     {
       "name": "Nivell 1",
-      "description": "Aquest es el primer nivell del joc.",
+      "description": "Aquest es el primer nivell del joc.<br>Fes servir els cursors per moure't i espai per disparar.",
       "background": {
         "layers": [
           {
@@ -36,7 +36,7 @@
         ],
         "speed": {
           "start": 0,
-          "target": 1
+          "target": 2
         }
       },
       "waves": [
@@ -44,19 +44,19 @@
           "distance": 100,
           "spawns": [
             {
-              "type": "alien_c",
+              "type": "alien_a",
               "formation": {
                 "type": "columns",
-                "amount": 21,
+                "amount": 7,
                 "column_height": 350,
                 "spacer": 50
               },
               "position": {
-                "x": 104,
+                "x": 1024,
                 "y": 81
               },
               "speed": {
-                "x": -1,
+                "x": -2,
                 "y": 0
               }
             }
@@ -109,12 +109,12 @@
               "type": "alien_a",
               "formation": {
                 "type": "columns",
-                "amount": 7,
+                "amount": 14,
                 "column_height": 350,
                 "spacer": 50
               },
               "position": {
-                "x": 104,
+                "x": 1024,
                 "y": 81
               },
               "speed": {
@@ -178,12 +178,12 @@
               "type": "alien_a",
               "formation": {
                 "type": "columns",
-                "amount": 1,
+                "amount": 42,
                 "column_height": 350,
                 "spacer": 50
               },
               "position": {
-                "x": 104,
+                "x": 1024,
                 "y": 81
               },
               "speed": {
