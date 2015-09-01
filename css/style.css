@@ -35,15 +35,24 @@ body {
     color: #FF7F00;
     font-family: Helvetica, sans-serif;
     font-size: 40px;
-    cursor: default;
-    display:none;
+    cursor:default;
 }
 
 
 .game-over span, .messages span{
     font-size: 20px;
-    cursor: pointer;
     position: relative;
+
+}
+.game-over span {
+    cursor: pointer;
+}
+
+
+.game-over {
+    z-index: 100;
+    display: none;
+    cursor: default;
 }
 
 .game-over span:hover, .messages {
@@ -55,4 +64,13 @@ body {
 }
 .actives {
     top:35px;
+}
+
+.fadeable {
+
+    -webkit-transition: opacity 3s ease-in-out;
+    -moz-transition: opacity 3s ease-in-out;
+    -ms-transition: opacity 3s ease-in-out;
+    -o-transition: opacity 3s ease-in-out;
+    opacity: 0;
 }

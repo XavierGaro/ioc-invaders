@@ -923,7 +923,10 @@ var IOC_INVADERS = function (config) {
                 background,
 
                 player,
-                gameOver,
+            //gameOver,
+
+                state,// "GameOver", "LoadingNextLevel"
+
 
                 initEnvironment = function (data) { // TODO: Esta puede ser privada, o ser sustituida por init
                     gameCanvas = document.getElementById(data.canvas.game);
@@ -963,15 +966,44 @@ var IOC_INVADERS = function (config) {
                         },
                         showMessage: function (message, time) { // Temps en milisegons
                             messageText.innerHTML = message;
-                            messageText.style.display = "block";
+                            messageText.style.opacity = 1;
 
                             setTimeout(function () {
-                                messageText.style.display = "none";
+                                messageText.style.opacity = 0;
                             }, time);
                         },
 
                         hideMessage: function () {
-                            messageText.style.display = "none";
+                            messageText.style.opacity = 0;
+                        },
+
+                        showGameOver: function () {
+                            document.getElementById('game-over').style.display = "block";
+                        },
+
+                        hideGameOver: function () {
+                            document.getElementById('game-over').style.display = "none";
+                        },
+
+                        transitionScreen: function (callback, time) {
+                            time = time || 2000;
+                            //var originalClassName = gameCanvas.className;
+                            gameCanvas.className += " hide-opacity";
+                            gameCanvas.style.opacity = 0;
+
+                            setTimeout(function () {
+                                //gameCanvas.className = originalClassName;
+                                gameCanvas.style.opacity = 1;
+                                callback();
+                            }, time);
+                        },
+
+                        fadeIn: function () {
+                            gameCanvas.style.opacity = 1;
+                        },
+
+                        fadeOut: function () {
+                            gameCanvas.style.opacity = 0;
                         }
 
 
@@ -1011,8 +1043,6 @@ var IOC_INVADERS = function (config) {
             };
 
             that.loadAssets = function (assets) {
-                console.log("GameManager#loadAssets", assets);
-
                 for (var i = 0; i < assets.length; i++) {
                     assetManager.queueDownload(assets[i]);
                 }
@@ -1023,7 +1053,7 @@ var IOC_INVADERS = function (config) {
 
             that.loadEnemiesData = function () {
                 that.loadData(config.entity_data_url, function (data) {
-                    console.log(data);
+
                     entitiesRepository.add(data);
                     that.loadLevelsData();
                 })
@@ -1031,7 +1061,6 @@ var IOC_INVADERS = function (config) {
 
             that.loadLevelsData = function () {
                 that.loadData(config.levels_data_url, function (data) {
-                    console.log(data);
                     levels = data.levels;
                     that.start();
                 });
@@ -1039,7 +1068,6 @@ var IOC_INVADERS = function (config) {
 
 
             that.start = function () {
-                console.log("GameManager#start");
 
                 background = backgroundConstructor({
                     context: gameContext
@@ -1130,11 +1158,12 @@ var IOC_INVADERS = function (config) {
                 playerShotPool.update();
 
 
-                if (player.isColliding && !gameOver) {
+                if (player.isColliding && state != "GameOver") {
                     setGameOver();
-                } else if (enemyPool.actives === 0 && levelEnded && !gameOver) {
-                    setEndLevel();
-                } else if (!gameOver) {
+                } else if (enemyPool.actives === 0 && levelEnded && state != "GameOver" && state != "LoadingNextLevel") {
+                    ui.transitionScreen(setEndLevel)
+                    state = "LoadingNextLevel";
+                } else if (state != "GameOver") {
                     player.update();
                     distance++;
                 }
@@ -1299,7 +1328,8 @@ var IOC_INVADERS = function (config) {
             }
 
             function setEndLevel() {
-                that.clearScreen();
+                //that.clearScreen();
+
                 currentLevel++;
 
                 if (currentLevel >= levels.length) {
@@ -1317,25 +1347,28 @@ var IOC_INVADERS = function (config) {
                 // TODO: les explosions també?
 
                 that.startLevel(currentLevel); // TODO com que ja som dins del loop del joc no cal tornar a cridar-lo
+                state = "Running";
             }
 
 
             function setGameOver() {
                 player.update(); // TODO Un últim update per activar la explosió
-                gameOver = true;
-                console.log("Game Over");
+                state = "GameOver";
+
                 //this.backgroundAudio.pause();
                 //this.gameOverAudio.currentTime = 0; // No hace falta porqué no es un loop
                 //this.gameOverAudio.play();
                 ui.hideMessage();
-                document.getElementById('game-over').style.display = "block";
+                ui.showGameOver();
+                ui.fadeOut();
+
 
             }
 
             that.restart = function () {
 
                 //this.gameOverAudio.pause();
-                document.getElementById('game-over').style.display = "none";
+                ui.hideGameOver();
 
                 player = playerConstructor(
                     {
@@ -1349,7 +1382,7 @@ var IOC_INVADERS = function (config) {
 
                 currentLevel = 0;
                 score = 0;
-                gameOver = false;
+                state = "Running"
 
                 //that.startLevel(currentLevel);
 
@@ -1362,6 +1395,7 @@ var IOC_INVADERS = function (config) {
                 //that.startLevel(currentLevel); // TODO com que ja som dins del loop del joc no cal tornar a cridar-lo
 
                 //this.backgroundAudio.currentTime = 0;
+                ui.fadeIn();
                 that.startLevel(currentLevel);
 
                 //this.start();
