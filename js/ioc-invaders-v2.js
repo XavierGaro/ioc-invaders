@@ -1095,9 +1095,11 @@ var IOC_INVADERS = function (config) {
             var generateMusic = function () {
                 for (var i = 0; i < musicQueue.length; i++) {
                     sound = new Audio(musicQueue[i].path);
-                    sound.volume = soundsQueue[i].volume;
-                    sound.loop = soundsQueue[i].loop;
+                    sound.volume = musicQueue[i].volume;
+                    sound.loop = musicQueue[i].loop;
                     sound.load(); // TODO això es necessari pels navegadorsm és antics, si funciona amb FF i Chrome ho esborremt
+
+                    console.log("loop?", musicQueue[i].loop);
                     cache.music[musicQueue[i].id] = sound;
                 }
             };
