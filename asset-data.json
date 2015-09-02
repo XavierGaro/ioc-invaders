@@ -195,6 +195,26 @@
         "path": "assets/sounds/explosion.mp3",
         "volume": 0.25
       }
+    ],
+    "music": [
+      {
+        "id": "rocketman",
+        "path": "assets/sounds/POL-rocketman-short.mp3",
+        "loop": true,
+        "volume": 0.25
+      },
+      {
+        "id": "game-over",
+        "path": "assets/sounds/game-over.mp3",
+        "loop": false,
+        "volume": 1
+      },
+      {
+        "id": "sunset",
+        "path" : "assets/sounds/POL-sunset-route-short.mp3",
+        "loop" : true,
+        "volume": 0.25
+      }
     ]
   },
   "canvas": {

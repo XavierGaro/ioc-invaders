@@ -4,7 +4,7 @@
     "data": {
       "type": "player",
       "sprite": "spaceship",
-      "explosion": null,
+      "explosion": "player_explosion",
       "cannon": {
         "bullet": "plasma_shot_1",
         "fireRate": 15,
@@ -24,7 +24,7 @@
     "data": {
       "type": "enemy",
       "sprite": "alien_a",
-      "explosion": null,
+      "explosion": "enemy_explosion",
       "points": 10,
       "cannon": {
         "bullet": "standard_shot",
@@ -46,17 +46,17 @@
     "data": {
       "type": "enemy",
       "sprite": "alien_b",
-      "explosion": null,
+      "explosion": "enemy_explosion",
       "points": 15,
       "cannon": {
-        "bullet": "zigzag_shot",
-        "fireRate": 7,
+        "bullet": "wave_shot_a",
+        "fireRate": 1,
         "position": {
           "x": -5,
           "y": 14
         },
         "direction": {
-          "x": -3.5,
+          "x": -5,
           "y": 0
         }
       },
@@ -68,18 +68,40 @@
     "data": {
       "type": "enemy",
       "sprite": "alien_c",
-      "explosion": null,
-      "points": 15,
+      "explosion": "enemy_explosion",
+      "points": 30,
       "cannon": {
         "bullet": "standard_shot",
-        "fireRate": 5,
+        "fireRate": 2,
         "position": {
-          "x": -5,
+          "x": 10,
           "y": 14
         },
         "direction": {
-          "x": -2.5,
-          "y": 0
+          "x": 0,
+          "y": 3
+        }
+      },
+      "move": "movement_pattern_c"
+    }
+  },
+  {
+    "name": "alien_c_2",
+    "data": {
+      "type": "enemy",
+      "sprite": "alien_c",
+      "explosion": "enemy_explosion",
+      "points": 30,
+      "cannon": {
+        "bullet": "standard_shot",
+        "fireRate": 1,
+        "position": {
+          "x": 5,
+          "y": -5
+        },
+        "direction": {
+          "x": 0,
+          "y": -3
         }
       },
       "move": "movement_pattern_c"
@@ -90,12 +112,12 @@
     "data": {
       "type": "enemy",
       "sprite": "alien_d",
-      "explosion": null,
-      "points": 15,
+      "explosion": "enemy_explosion",
+      "points": 100,
       "cannon": [
         {
           "bullet": "wave_shot_a",
-          "fireRate": 50,
+          "fireRate": 2,
           "position": {
             "x": -5,
             "y": 2
@@ -107,7 +129,7 @@
         },
         {
           "bullet": "wave_shot_b",
-          "fireRate": 50,
+          "fireRate": 2,
           "position": {
             "x": -5,
             "y": 40
@@ -135,7 +157,7 @@
     "data": {
       "type": "shot",
       "sprite": "bullet_enemy",
-      "sound": null,
+      "sound": "laser",
       "move": "movement_pattern_c"
     }
   },
