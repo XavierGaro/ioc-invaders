@@ -1,13 +1,3 @@
-// Drets de autor
-// laser_gun.mp3: http://soundbible.com/1769-Laser-Gun.html
-// laser.mp3: http://soundbible.com/1087-Laser.html
-// alien_death_ray.mp3: http://soundbible.com/1274-Alien-Death-Ray.html
-// large_explosion.mp3: http://www.freesound.org/people/inferno/sounds/18384/
-// laser_rocket.mp3: http://www.freesound.org/people/EcoDTR/sounds/36847/
-// Imatges naus: http://opengameart.org/content/complete-spaceship-game-art-pack
-
-// UTILITATS
-
 /**
  * Aquesta utilitat afegeix el mètode clamp a la prototip Number. El que fa es afegir el métode clamp a tots els
  * nombres de manera que podem encaixonar-lo dins d'uns limits. En cas de que el nombre sigui menor que el mínim el
@@ -28,7 +18,6 @@ Number.prototype.clamp = function (min, max) {
  * @returns {boolean} - cert si es troba o false en cas contrari
  */
 Array.prototype.contains = function (needle) {
-    //console.log("Mida d'aquest array: ", this.length);
     for (var i in this) {
         if (this[i] == needle) return true;
     }
@@ -37,8 +26,7 @@ Array.prototype.contains = function (needle) {
 
 
 /**
- * Aquest es el mòdul que contindrà el nostre joc. D'aquesta manera tot el nostre lloc resideix en aquest espai de noms
- * i no poluciona el entorn global.
+ * Aquest es el mòdul que conté el joc evitant contaminar l'espai global.
  */
 var IOC_INVADERS = function (config) {
     var gameManager,
@@ -56,7 +44,6 @@ var IOC_INVADERS = function (config) {
             var entities = {},
 
                 addEntity = function (name, data) {
-                    // Create sprite
                     var entity = data;
 
                     entity.sprite = data.sprite;
@@ -70,13 +57,13 @@ var IOC_INVADERS = function (config) {
 
 
             return {
-                add: function (enemy) {
-                    if (Array.isArray(enemy)) {
-                        for (var i = 0; i < enemy.length; i++) {
-                            addEntity(enemy[i].name, enemy[i].data);
+                add: function (entity) {
+                    if (Array.isArray(entity)) {
+                        for (var i = 0; i < entity.length; i++) {
+                            addEntity(entity[i].name, entity[i].data);
                         }
                     } else {
-                        addEntity(enemy.name, enemy.data);
+                        addEntity(entity.name, entity.data);
                     }
 
                 },
@@ -85,10 +72,10 @@ var IOC_INVADERS = function (config) {
                 get: function (name, position, speed) {
                     var entity = entities[name];
                     if (!entity) {
-                        console.error("No se encuentra el enemigo: ", entity);
+                        console.error("No es troba la entitat: ", entity);
                     }
                     entity.position = position;
-                    entity.speed = speed;
+                    entity.speedController = speed;
 
                     return entity;
                 }
@@ -100,33 +87,33 @@ var IOC_INVADERS = function (config) {
                 movement_pattern_a: function () {
                     // Inicialització
                     if (!this.extra.ready) {
-                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
-                        this.extra.leftEdge = this.position.x - 10 * this.extra.speed;
-                        this.extra.rightEdge = this.position.x + 10 * this.extra.speed;
-                        this.extra.topEdge = this.position.y + 10 * this.extra.speed;
-                        this.extra.bottomEdge = this.position.y - 10 * this.extra.speed;
-                        this.extra.direction = {x: this.speed.x <= 0 ? -1 : 1, y: 1};
+                        this.extra.speedController = Math.max(Math.abs(this.speedController.x), Math.abs(this.speedController.y));
+                        this.extra.leftEdge = this.position.x - 10 * this.extra.speedController;
+                        this.extra.rightEdge = this.position.x + 10 * this.extra.speedController;
+                        this.extra.topEdge = this.position.y + 10 * this.extra.speedController;
+                        this.extra.bottomEdge = this.position.y - 10 * this.extra.speedController;
+                        this.extra.direction = {x: this.speedController.x <= 0 ? -1 : 1, y: 1};
                         this.extra.ready = true;
                     }
 
-                    this.position.x += this.speed.x;
-                    this.position.y += this.speed.y * this.extra.direction.y;
+                    this.position.x += this.speedController.x;
+                    this.position.y += this.speedController.y * this.extra.direction.y;
 
 
                     if (this.position.y > this.extra.topEdge || this.position.y < this.extra.bottomEdge) {
-                        this.speed.x = this.extra.direction.x >= 0 ? this.extra.speed : -this.extra.speed;
-                        this.speed.y = 0;
+                        this.speedController.x = this.extra.direction.x >= 0 ? this.extra.speedController : -this.extra.speedController;
+                        this.speedController.y = 0;
                         this.extra.direction.y = -this.extra.direction.y;
                     }
 
                     if (this.position.x <= this.extra.leftEdge) {
-                        this.speed.x = 0;
-                        this.speed.y = this.extra.speed;
-                        this.extra.leftEdge = this.position.x - 10 * this.extra.speed;
+                        this.speedController.x = 0;
+                        this.speedController.y = this.extra.speedController;
+                        this.extra.leftEdge = this.position.x - 10 * this.extra.speedController;
                     } else if (this.position.x >= this.extra.rightEdge) {
-                        this.speed.x = 0;
-                        this.speed.y = this.extra.speed;
-                        this.extra.rightEdge = this.position.x + 10 * this.extra.speed;
+                        this.speedController.x = 0;
+                        this.speedController.y = this.extra.speedController;
+                        this.extra.rightEdge = this.position.x + 10 * this.extra.speedController;
                     }
 
                     this.position.y = this.position.y.clamp(this.extra.bottomEdge, this.extra.topEdge);
@@ -135,8 +122,8 @@ var IOC_INVADERS = function (config) {
                 movement_pattern_b: function () { // TODO falta solucionar como se añaden los extras
                     // Inicialització
 
-                    this.position.x += this.speed.x;
-                    this.position.y += this.speed.y;
+                    this.position.x += this.speedController.x;
+                    this.position.y += this.speedController.y;
 
                 },
 
@@ -145,22 +132,22 @@ var IOC_INVADERS = function (config) {
 
                     if (!this.extra.ready) {
                         this.extra.age = 0;
-                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
+                        this.extra.speedController = Math.max(Math.abs(this.speedController.x), Math.abs(this.speedController.y));
                         this.extra.ready = true;
-                        this.extra.vertical = this.speed.x > this.speed.y;
+                        this.extra.vertical = this.speedController.x > this.speedController.y;
                     }
 
                     if (this.extra.direction === 1) {
-                        this.speed.x = this.extra.speed * Math.cos(-this.extra.age * Math.PI / 64);
+                        this.speedController.x = this.extra.speedController * Math.cos(-this.extra.age * Math.PI / 64);
 
                     } else {
-                        this.speed.y = this.extra.speed * Math.sin(this.extra.age * Math.PI / 64);
+                        this.speedController.y = this.extra.speedController * Math.sin(this.extra.age * Math.PI / 64);
 
                     }
 
                     this.extra.age++;
-                    this.position.x += this.speed.x;
-                    this.position.y += this.speed.y;
+                    this.position.x += this.speedController.x;
+                    this.position.y += this.speedController.y;
 
                 },
 
@@ -169,22 +156,22 @@ var IOC_INVADERS = function (config) {
 
                     if (!this.extra.ready) {
                         this.extra.age = 0;
-                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
+                        this.extra.speedController = Math.max(Math.abs(this.speedController.x), Math.abs(this.speedController.y));
                         this.extra.ready = true;
-                        this.extra.vertical = this.speed.x > this.speed.y;
+                        this.extra.vertical = this.speedController.x > this.speedController.y;
                     }
 
                     if (this.extra.direction === 1) {
-                        this.speed.x = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
+                        this.speedController.x = this.extra.speedController * Math.cos(this.extra.age * Math.PI / 64);
 
                     } else {
-                        this.speed.y = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
+                        this.speedController.y = this.extra.speedController * Math.cos(this.extra.age * Math.PI / 64);
 
                     }
 
                     this.extra.age++;
-                    this.position.x += this.speed.x;
-                    this.position.y += this.speed.y;
+                    this.position.x += this.speedController.x;
+                    this.position.y += this.speedController.y;
 
                 }
 
@@ -200,9 +187,6 @@ var IOC_INVADERS = function (config) {
 
 
         inputController = (function () {
-            // TODO: Código para el InputController
-            // The keycodes that will be mapped when a user presses a button.
-            // Original code by Doug McInnes
             var KEY_CODES = {
                     32: 'space',
                     37: 'left',
@@ -211,35 +195,21 @@ var IOC_INVADERS = function (config) {
                     40: 'down'
                 },
 
-                // Creates the array to hold the KEY_CODES and sets all their values
-                // to false. Checking true/flase is the quickest way to check status
-                // of a key press and which one was pressed when determining
-                // when to move and which direction.
                 KEY_STATUS = {};
+
             for (var code in KEY_CODES) {
                 KEY_STATUS[KEY_CODES[code]] = false;
             }
-            /**
-             * Sets up the document to listen to onkeydown events (fired when
-             * any key on the keyboard is pressed down). When a key is pressed,
-             * it sets the appropriate direction to true to let us know which
-             * key it was.
-             */
+
             document.onkeydown = function (e) {
-                // Firefox and opera use charCode instead of keyCode to
-                // return which key was pressed.
                 var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+
                 if (KEY_CODES[keyCode]) {
                     e.preventDefault();
                     KEY_STATUS[KEY_CODES[keyCode]] = true;
                 }
             };
-            /**
-             * Sets up the document to listen to ownkeyup events (fired when
-             * any key on the keyboard is released). When a key is released,
-             * it sets teh appropriate direction to false to let us know which
-             * key it was.
-             */
+
             document.onkeyup = function (e) {
                 var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
                 if (KEY_CODES[keyCode]) {
@@ -302,23 +272,77 @@ var IOC_INVADERS = function (config) {
 
         },
 
+        gameObjectConstructor = function (options) {
+            var that = {
+                alive: false,
+                type: null,
+                position: null,
+                sprite: null,
+                extra: {}
+            };
+
+            that.updateSprite = function () {
+                that.sprite.position = that.position;
+                that.sprite.update();
+            };
+
+            that.render = function () {
+                that.sprite.render()
+            };
+
+            that.start = function (data) {
+                console.error("Error. Aquest mètode no està implementat");
+                return that;
+            };
+
+            that.update = function () {
+                console.error("Error. Aquest mètode no està implementat");
+            };
+
+            that.clear = function () {
+                console.error("Error. Aquest mètode no està implementat");
+            };
+
+
+            return that;
+        },
+
+        movingGameObjectConstructor = function (options) {
+            var that = gameObjectConstructor(options);
+
+            that.isColliding = false;
+            that.speedController = null;
+            that.outsideBoundariesTime = 0;
+
+            that.update = function () {
+                console.error("Error. Aquest mètode no està implementat");
+            };
+
+            that.checkBoundaries = function () {
+                if (this.position.x >= gameCanvas.width
+                    || this.position.x <= -this.sprite.size.width
+                    || this.position.y > gameCanvas.height
+                    || this.position.y < -this.sprite.size.height) {
+                    this.outsideBoundariesTime++;
+                } else {
+                    this.outsideBoundariesTime = 0;
+                }
+
+                return that.outsideBoundariesTime >= MAX_TIME_OUTSIDE_BOUNDARIES;
+            };
+
+            that.isCollidingWith = function (gameObject) {
+                return (this.position.x < gameObject.position.x + gameObject.sprite.size.width
+                && this.position.x + this.sprite.size.width > gameObject.position.x
+                && this.position.y < gameObject.position.y + gameObject.sprite.size.height
+                && this.position.y + this.sprite.size.height > gameObject.position.y);
+            };
+
+            return that;
+        },
 
         explosionConstructor = function (options) {
-            var that = {},
-                //soundPool = options.pools.sound,
-
-                // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
-                updateSprite = function () {
-                    that.sprite.position = that.position;
-                    that.sprite.update();
-                },
-
-                render = function () {
-                    that.sprite.render()
-                };
-
-
-            that.alive = false;
+            var that = gameObjectConstructor(options);
 
             that.start = function (data) {
                 that.alive = true;
@@ -327,7 +351,6 @@ var IOC_INVADERS = function (config) {
                 that.sprite = assetManager.getSprite(data.sprite);
                 that.sprite.isDone = false;
                 assetManager.getSound(data.sound);
-                //soundPool.get(that.sound) // TODO sound, s'ha de reproduir-se aqui mateix!
                 return that;
             };
 
@@ -338,20 +361,12 @@ var IOC_INVADERS = function (config) {
                 that.sprite = null;
             };
 
-            /**
-             * TODO: Aquesta funció es practicament identica a la de spaceshipConstructor.
-             *
-             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
-             */
             that.update = function () {
-
-
-                // Si la animació ha finalitzat aturem la explosió
                 if (that.sprite.isDone) {
                     return true;
                 }
-                updateSprite();
-                render();
+                that.updateSprite();
+                that.render();
             };
 
 
@@ -360,32 +375,10 @@ var IOC_INVADERS = function (config) {
         },
 
         shotConstructor = function (options) {
-            var that = {},
-                errorMessage = function () {
-                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
-                };
-
-            //soundPool = options.pools.sound,
-
-            // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
-
-            that.render = function () {
-                that.sprite.render()
-            };
-
-
-            that.updateSprite = function () {
-                that.sprite.position = that.position;
-                that.sprite.update();
-            };
-
-            that.move = errorMessage;
-
-
-            that.alive = false;
+            var that = movingGameObjectConstructor(options);
 
             that.start = function (data) {
-                that.isColliding = false;
+                // that.isColliding = false;
                 that.alive = true;
 
                 that.type = data.type;
@@ -394,10 +387,7 @@ var IOC_INVADERS = function (config) {
 
                 assetManager.getSound(data.sound);
 
-                //that.sprite = assetManager.getSprite(data.sprite);;
-                //soundPool.get(data.sound);// TODO sound, ha de reproduir-se aqui mateix!
-
-                that.speed = data.speed;
+                that.speedController = data.speedController;
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = data.extra || {};
@@ -416,22 +406,16 @@ var IOC_INVADERS = function (config) {
                 that.position = {x: 0, y: 0};
                 that.sprite = null;
 
-                that.speed = {x: 0, y: 0};
+                that.speedController = {x: 0, y: 0};
 
                 // Dades i Funcions especifiques de cada tipus de enemic
-                that.extra = null;
-                that.move = errorMessage;
+                that.extra = {};
+                that.move = null;
 
             };
 
-            /**
-             * TODO: Aquesta funció es practicament identica a la de spaceshipConstructor.
-             *
-             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
-             */
             that.update = function () {
 
-                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
                 if (that.isColliding) {
                     return true;
                 }
@@ -440,9 +424,6 @@ var IOC_INVADERS = function (config) {
 
                 that.move();
 
-
-                // TODO codi repetit a spaceshipConstrutor, canviar per altre solució
-                // Si ha sortit de la pantalla durant massa temps s'elimina.
                 if (that.checkBoundaries()) {
                     return true;
                 }
@@ -450,131 +431,25 @@ var IOC_INVADERS = function (config) {
                 that.render();
             };
 
-            that.checkBoundaries = function () {
-                if (this.position.x >= gameCanvas.width
-                    || this.position.x <= -this.sprite.size.width
-                    || this.position.y > gameCanvas.height
-                    || this.position.y < -this.sprite.size.height) {
-
-                    this.outsideBoundariesTime++;
-
-                } else {
-
-                    this.outsideBoundariesTime = 0;
-                }
-
-                return that.outsideBoundariesTime >= MAX_TIME_OUTSIDE_BOUNDARIES;
-            };
-
-            that.isCollidingWith = function (gameObject) {
-                return (this.position.x < gameObject.position.x + gameObject.sprite.size.width
-                && this.position.x + this.sprite.size.width > gameObject.position.x
-                && this.position.y < gameObject.position.y + gameObject.sprite.size.height
-                && this.position.y + this.sprite.size.height > gameObject.position.y);
-            };
-
-            return that;
-        },
-
-        playerConstructor = function (options) {
-            var that = spaceshipConstructor(options);
-
-            that.start(entitiesRepository.get('player', options.position, options.speed)); // TODO la posició inicial
-
-            that.shot = function (cannon) {
-                var origin;
-                console.log("està al shot", cannon.lastShot);
-                if (cannon.lastShot > cannon.fireRate) {
-                    cannon.lastShot = 0;
-                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
-                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
-                }
-            };
-
-            that.getInput = function () {
-                if (inputController.KEY_STATUS.left) {
-                    that.position.x -= that.speed.x;
-
-                } else if (inputController.KEY_STATUS.right) {
-                    that.position.x += that.speed.x;
-
-                }
-
-                if (inputController.KEY_STATUS.up) {
-                    that.position.y -= that.speed.y;
-
-                } else if (inputController.KEY_STATUS.down) {
-                    that.position.y += that.speed.y;
-                }
-
-                if (inputController.KEY_STATUS.space && !that.isColliding) {
-                    this.fire();
-                }
-
-                // Evitem que surti de la pantalla
-                this.position.x = this.position.x.clamp(0, gameCanvas.width - this.sprite.size.width);
-                this.position.y = this.position.y.clamp(0, gameCanvas.height - this.sprite.size.height);
-
-            };
-
-
-            // Sobrescrivim aquesta funció
-            that.update = function () {
-                that.updateCannon();
-
-                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
-                if (this.isColliding) {
-                    that.explosionPool.instantiate(that.explosion, that.position); // TODO canviar pel punt central del sprite
-                    return true;
-                }
-
-                this.getInput();
-                this.updateSprite();
-                this.render();
-            };
-
-            that.updateCannon = function () {
-                for (var i = 0; i < that.cannon.length; i++) {
-                    if (that.cannon[i].lastShot === undefined) {
-                        that.cannon[i].lastShot = that.cannon[i].fireRate + 1;
-                    }
-                    that.cannon[i].lastShot++;
-                }
-            };
-
 
             return that;
         },
 
         spaceshipConstructor = function (options) {
-            var that = {},
+            var that = movingGameObjectConstructor(options);
 
-                errorMessage = function () {
-                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
-                };
-
-            that.move = errorMessage;
-
-            that.updateSprite = function () {
-                that.sprite.position = that.position;
-                that.sprite.update();
-
-            };
-
-            that.render = function () {
-                that.sprite.render()
-            };
+            // that.move = null;
 
             that.bulletPool = options.pool.bullet;
             that.explosionPool = options.pool.explosion;
 
             that.fire = function () { // @protected
                 for (var i = 0; i < that.cannon.length; i++) {
-                    that.shot(that.cannon[i]);
+                    that.shoot(that.cannon[i]);
                 }
             };
 
-            that.shot = function (cannon) { // @protected
+            that.shoot = function (cannon) { // @protected
                 var origin;
 
                 if (Math.random() < cannon.fireRate / 100) {
@@ -583,11 +458,11 @@ var IOC_INVADERS = function (config) {
                 }
             };
 
-            that.alive = false;
+            // that.alive = false;
 
             that.start = function (data) {
 
-                that.isColliding = false;
+                // that.isColliding = false;
                 that.alive = true;
 
                 that.type = data.type;
@@ -596,7 +471,7 @@ var IOC_INVADERS = function (config) {
                 that.cannon = data.cannon;
                 that.explosion = data.explosion;
 
-                that.speed = data.speed;
+                that.speedController = data.speedController;
                 that.points = data.points;
 
                 that.outsideBoundariesTime = 0;
@@ -618,13 +493,13 @@ var IOC_INVADERS = function (config) {
                 that.position = {x: 0, y: 0};
                 that.sprite = null;
 
-                that.speed = {x: 0, y: 0};
+                that.speedController = {x: 0, y: 0};
                 that.points = 0;
                 that.cannon = null;
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = null;
-                that.move = errorMessage;
+                that.move = null;
                 that.outsideBoundariesTime = 0;
 
             };
@@ -655,37 +530,108 @@ var IOC_INVADERS = function (config) {
                 that.render();
             };
 
-            that.checkBoundaries = function () {
-                if (this.position.x >= gameCanvas.width
-                    || this.position.x <= -this.sprite.size.width
-                    || this.position.y > gameCanvas.height
-                    || this.position.y < -this.sprite.size.height) {
-                    this.outsideBoundariesTime++;
-                } else {
-                    this.outsideBoundariesTime = 0;
-                }
-
-                return that.outsideBoundariesTime >= MAX_TIME_OUTSIDE_BOUNDARIES;
-            };
-
-            that.isCollidingWith = function (gameObject) {
-                return (this.position.x < gameObject.position.x + gameObject.sprite.size.width
-                && this.position.x + this.sprite.size.width > gameObject.position.x
-                && this.position.y < gameObject.position.y + gameObject.sprite.size.height
-                && this.position.y + this.sprite.size.height > gameObject.position.y);
-            };
 
             return that;
 
         },
 
+        playerConstructor = function (options) {
+            var that = spaceshipConstructor(options);
+
+            that.start(entitiesRepository.get('player', options.position, options.speedController)); // TODO la posició inicial
+
+            that.shoot = function (cannon) {
+                var origin;
+                if (cannon.lastShot > cannon.fireRate) {
+                    cannon.lastShot = 0;
+                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
+                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
+                }
+            };
+
+            var getInput = function () {
+                if (inputController.KEY_STATUS.left) {
+                    that.position.x -= that.speedController.x;
+
+                } else if (inputController.KEY_STATUS.right) {
+                    that.position.x += that.speedController.x;
+
+                }
+
+                if (inputController.KEY_STATUS.up) {
+                    that.position.y -= that.speedController.y;
+
+                } else if (inputController.KEY_STATUS.down) {
+                    that.position.y += that.speedController.y;
+                }
+
+                if (inputController.KEY_STATUS.space && !that.isColliding) {
+                    that.fire();
+                }
+
+                // Evitem que surti de la pantalla
+                that.position.x = that.position.x.clamp(0, gameCanvas.width - that.sprite.size.width);
+                that.position.y = that.position.y.clamp(0, gameCanvas.height - that.sprite.size.height);
+
+            };
+
+
+            that.update = function () {
+                updateCannon();
+
+                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
+                if (this.isColliding) {
+                    that.explosionPool.instantiate(that.explosion, that.position);
+                    return true;
+                }
+
+                getInput();
+                this.updateSprite();
+                this.render();
+            };
+
+            var updateCannon = function () {
+                for (var i = 0; i < that.cannon.length; i++) {
+                    if (that.cannon[i].lastShot === undefined) {
+                        that.cannon[i].lastShot = that.cannon[i].fireRate + 1;
+                    }
+                    that.cannon[i].lastShot++;
+                }
+            };
+
+
+            return that;
+        },
+
+
         backgroundConstructor = function () {
             var that = {},
                 layers = {},
 
+                speedController = {
+                    value: 0,
+                    target: 0,
+                    acceleration: 0.01,
+
+                    reset: function () {
+                        this.value = 0;
+                        this.target = 0;
+                        this.acceleration = 0.002;
+                    },
+
+                    update: function () {
+                        if (this.value < this.target) {
+                            this.value += this.acceleration;
+                        } else if (this.value > this.target) {
+                            this.value -= this.acceleration;
+                        }
+                    }
+                },
+
+
                 move = function (layer) {
-                    layer.position.x += layer.speed.x * that.speed.value;
-                    layer.position.y += layer.speed.y * that.speed.value;
+                    layer.position.x += layer.speedController.x * speedController.value;
+                    layer.position.y += layer.speedController.y * speedController.value;
 
                     if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
                         layer.position.x = 0;
@@ -698,7 +644,6 @@ var IOC_INVADERS = function (config) {
                 },
 
                 render = function (layer) {
-
                     // Imatge actual
                     gameContext.drawImage(
                         layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
@@ -707,12 +652,11 @@ var IOC_INVADERS = function (config) {
                     gameContext.drawImage(
                         layer.image, layer.position.x + layer.image.width - 1,
                         layer.position.y, layer.image.width, layer.image.height);
-
                 };
 
 
             that.update = function () {
-                that.speed.update();
+                speedController.update();
                 for (var i = 0; i < layers.length; i++) {
                     move(layers[i]);
                     render(layers[i]);
@@ -724,8 +668,8 @@ var IOC_INVADERS = function (config) {
             that.start = function (data) {
                 layers = data.layers;
 
-                that.speed.value = data.speed.start;
-                that.speed.target = data.speed.target;
+                speedController.value = data.speedController.start;
+                speedController.target = data.speedController.target;
 
                 for (var i = 0; i < layers.length; i++) {
                     layers[i].image = assetManager.getImage(layers[i].id);
@@ -733,39 +677,18 @@ var IOC_INVADERS = function (config) {
                 }
             };
 
-            that.speed = {
-                value: 0,
-                target: 0,
-                acceleration: 0.01,
-
-                reset: function () {
-                    that.speed.value = 0;
-                    that.speed.target = 0;
-                    that.speed.acceleration = 0.002;
-                },
-
-                update: function () {
-                    if (this.value < this.target) {
-                        this.value += this.acceleration;
-                    } else if (this.value > this.target) {
-                        this.value -= this.acceleration;
-                    }
-                }
-
-            };
 
             that.clear = function () {
                 layers = {};
-                that.speed.reset();
+                speedController.reset();
             };
 
 
             return that;
         },
 
-        // TODO: Els sprites han de ser reversibles, la meitat dels frames per  quan es mou a la dreta i la altre mitat per la esquerra
         spriteConstructor = function (options) {
-            //console.log(options);
+
             var that = {},
                 frameIndex = 0,
                 ticksPerFrame = options.ticksPerFrame || 0,
@@ -783,7 +706,6 @@ var IOC_INVADERS = function (config) {
 
             that.update = function () {
 
-                // TODO: Cercar una altre manera de fer-ho, això es necessari per actualitzar només 1 vegada per frame els sprites
                 if (updatedSprites.contains(that)) {
                     return;
                 } else {
@@ -1027,8 +949,6 @@ var IOC_INVADERS = function (config) {
                     sound.volume = musicQueue[i].volume;
                     sound.loop = musicQueue[i].loop;
                     sound.load(); // TODO això es necessari pels navegadorsm és antics, si funciona amb FF i Chrome ho esborremt
-
-                    console.log("loop?", musicQueue[i].loop);
                     cache.music[musicQueue[i].id] = sound;
                 }
             };
@@ -1166,25 +1086,15 @@ var IOC_INVADERS = function (config) {
 
 
             that.loadData = function (url, callback) {
-                var httpRequest;
-
-                if (window.XMLHttpRequest) {// codi per IE7+, Firefox, Chrome, Opera, Safari
-                    httpRequest = new XMLHttpRequest();
-                } else { // codi for IE6, IE5
-                    httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
-                }
+                var httpRequest = new XMLHttpRequest();
 
                 httpRequest.open("GET", url, true);
+                httpRequest.overrideMimeType('text/plain');
                 httpRequest.send(null);
 
-                httpRequest.onreadystatechange = function () {
-                    if (httpRequest.readyState === 4 && httpRequest.status === 200) {
-                        // Hem rebut la resposta correctament
-                        var data = JSON.parse(httpRequest.responseText);
-                        callback(data);
-                    } else if (httpRequest.readyState === 4) {
-                        console.error("Error al carregar les dades del joc");
-                    }
+                httpRequest.onload = function () {
+                    var data = JSON.parse(httpRequest.responseText);
+                    callback(data);
                 };
             };
 
@@ -1234,12 +1144,11 @@ var IOC_INVADERS = function (config) {
                 });
 
                 that.restart();
-                gameLoop(); // TODO esto debe ser update()
+                update();
 
             };
 
             that.startLevel = function (level) {
-                // TODO mostrar missatge de benvinguda
 
                 var message = levels[level].name
                     + "<p><span>"
@@ -1258,22 +1167,17 @@ var IOC_INVADERS = function (config) {
             };
 
 
-            function gameLoop() { // TODO: eliminar després de les proves o canviar el nom a update <-- altre opció es fer que desde el gameLoop es cridint els diferents mètodes: Update(), DetectCollisions(), etc.
-                window.requestAnimationFrame(gameLoop);
+            function update() { // TODO: eliminar després de les proves o canviar el nom a update <-- altre opció es fer que desde el gameLoop es cridint els diferents mètodes: Update(), DetectCollisions(), etc.
+                window.requestAnimationFrame(update);
 
-                //gametime = Date.now();
                 updatedSprites = [];
 
-
                 spawner();
-
 
                 detectCollisions();
 
                 background.update();
                 enemyPool.update();
-
-
                 enemyShotPool.update();
                 playerShotPool.update();
 
@@ -1405,7 +1309,7 @@ var IOC_INVADERS = function (config) {
             }
 
             function spawnEnemy(enemy) {
-                enemyPool.instantiate(enemy.type, enemy.position, enemy.speed);
+                enemyPool.instantiate(enemy.type, enemy.position, enemy.speedController);
             }
 
             function spawnFormation(wave) {
@@ -1431,7 +1335,7 @@ var IOC_INVADERS = function (config) {
                             enemyPool.instantiate(wave.type, {
                                 x: currentPosition.x,
                                 y: currentPosition.y
-                            }, wave.speed);
+                            }, wave.speedController);
 
 
                             currentPosition.y += spacer;
@@ -1456,7 +1360,7 @@ var IOC_INVADERS = function (config) {
                                 enemyPool.instantiate(wave.type, {
                                     x: originPosition.x + (spacer * i),
                                     y: originPosition.y + (spacer * j)
-                                }, wave.speed);
+                                }, wave.speedController);
 
                             }
                         }
@@ -1472,7 +1376,7 @@ var IOC_INVADERS = function (config) {
                             enemyPool.instantiate(wave.type, {
                                 x: originPosition.x + (spacer * i),
                                 y: originPosition.y
-                            }, wave.speed);
+                            }, wave.speedController);
                         }
                         break;
 
@@ -1484,7 +1388,7 @@ var IOC_INVADERS = function (config) {
                             enemyPool.instantiate(wave.type, {
                                 x: originPosition.x,
                                 y: originPosition.y + (spacer * i)
-                            }, wave.speed);
+                            }, wave.speedController);
                         }
                         break;
 
@@ -1496,12 +1400,10 @@ var IOC_INVADERS = function (config) {
             }
 
             function setEndLevel() {
-                //that.clearScreen();
 
                 currentLevel++;
 
                 if (currentLevel >= levels.length) {
-                    //console.log("Enhorabona, has completat tots els nivells, tornem a començar!")
                     currentLevel = 0;
                 }
 
@@ -1510,18 +1412,15 @@ var IOC_INVADERS = function (config) {
                 enemyShotPool.clear();
                 playerShotPool.clear();
 
-                that.startLevel(currentLevel); // TODO com que ja som dins del loop del joc no cal tornar a cridar-lo
+                that.startLevel(currentLevel);
                 state = "Running";
             }
 
 
             function setGameOver() {
-                player.update(); // TODO Un últim update per activar la explosió
+                player.update();
                 state = "GameOver";
 
-                //this.backgroundAudio.pause();
-                //this.gameOverAudio.currentTime = 0; // No hace falta porqué no es un loop
-                //this.gameOverAudio.play();
                 ui.hideMessage();
                 ui.showGameOver();
                 ui.fadeOut();
@@ -1545,12 +1444,12 @@ var IOC_INVADERS = function (config) {
                             explosion: explosionPool
                         },
                         position: {x: 10, y: 256},
-                        speed: {x: 4, y: 4}
+                        speedController: {x: 4, y: 4}
                     });
 
                 currentLevel = 0;
                 score = 0;
-                state = "Running"
+                state = "Running";
 
                 //that.startLevel(currentLevel);
 

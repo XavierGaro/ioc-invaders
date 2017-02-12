@@ -8,34 +8,34 @@
         "layers": [
           {
             "id": "bg_layer_1",
-            "speed": {
+            "speedController": {
               "x": -1,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2",
-            "speed": {
+            "speedController": {
               "x": -2,
               "y": 0
             }
           },
           {
             "id": "bg_layer_3",
-            "speed": {
+            "speedController": {
               "x": -4,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4",
-            "speed": {
+            "speedController": {
               "x": -8,
               "y": 0
             }
           }
         ],
-        "speed": {
+        "speedController": {
           "start": 0,
           "target": 2
         }
@@ -56,7 +56,7 @@
                 "x": 1024,
                 "y": 81
               },
-              "speed": {
+              "speedController": {
                 "x": -1.5,
                 "y": 0
               }
@@ -72,7 +72,7 @@
                 "x": 1024,
                 "y": 350
               },
-              "speed": {
+              "speedController": {
                 "x": -1,
                 "y": 0
               }
@@ -94,7 +94,7 @@
                 "x": 1024,
                 "y": 30
               },
-              "speed": {
+              "speedController": {
                 "x": -1.5,
                 "y": 0
               }
@@ -110,7 +110,7 @@
                 "x": 1024,
                 "y": 250
               },
-              "speed": {
+              "speedController": {
                 "x": -3,
                 "y": 0
               }
@@ -131,7 +131,7 @@
                 "x": 1024,
                 "y": 30
               },
-              "speed": {
+              "speedController": {
                 "x": -5,
                 "y": 0
               }
@@ -152,7 +152,7 @@
                 "x": 1024,
                 "y": 300
               },
-              "speed": {
+              "speedController": {
                 "x": -5,
                 "y": 0
               }
@@ -173,7 +173,7 @@
                 "x": 1024,
                 "y": 240
               },
-              "speed": {
+              "speedController": {
                 "x": -1,
                 "y": 0
               }
@@ -194,7 +194,7 @@
                 "x": 1024,
                 "y": 140
               },
-              "speed": {
+              "speedController": {
                 "x": -1,
                 "y": 0
               }
@@ -215,7 +215,7 @@
                 "x": 1024,
                 "y": 340
               },
-              "speed": {
+              "speedController": {
                 "x": -1,
                 "y": 0
               }
@@ -236,27 +236,27 @@
         "layers": [
           {
             "id": "bg_layer_1_green",
-            "speed": {
+            "speedController": {
               "x": -1,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2_green",
-            "speed": {
+            "speedController": {
               "x": -4,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4_green",
-            "speed": {
+            "speedController": {
               "x": -8,
               "y": 0
             }
           }
         ],
-        "speed": {
+        "speedController": {
           "start": 0,
           "target": 1
         }
@@ -277,7 +277,7 @@
                 "x": 1024,
                 "y": 81
               },
-              "speed": {
+              "speedController": {
                 "x": -1,
                 "y": 0
               }
@@ -299,34 +299,34 @@
         "layers": [
           {
             "id": "bg_layer_1",
-            "speed": {
+            "speedController": {
               "x": -1,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2_green",
-            "speed": {
+            "speedController": {
               "x": -2,
               "y": 0
             }
           },
           {
             "id": "bg_layer_3",
-            "speed": {
+            "speedController": {
               "x": -4,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4_green",
-            "speed": {
+            "speedController": {
               "x": -8,
               "y": 0
             }
           }
         ],
-        "speed": {
+        "speedController": {
           "start": 0,
           "target": 1
         }
@@ -347,7 +347,7 @@
                 "x": 1024,
                 "y": 81
               },
-              "speed": {
+              "speedController": {
                 "x": -1,
                 "y": 0
               }
