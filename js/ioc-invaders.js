@@ -29,16 +29,23 @@ Array.prototype.contains = function (needle) {
  * Aquest es el mòdul que conté el joc evitant contaminar l'espai global.
  */
 var IOC_INVADERS = function (config) {
-    var gameManager,
-        assetManager,
-        gametime,
-
-        gameCanvas,// TODO: per acabar de definir si aquests dos valors els injectem on calgui o els deixem globals (ara es fa servir de les dues maneras)
-        gameContext,
+    var GameState = {
+            GAME_OVER: "GameOver",
+            LOADING_NEXT_LEVEL: "LoadingNextLevel",
+            RUNNING: "Running"
+        },
 
         MAX_TIME_OUTSIDE_BOUNDARIES = 180,// nombre de frames fora de la pantalla avans de esborrar-lo. a 60 FPS això equival a 3s
 
-        updatedSprites = [],// TODO: cercar altre solució, això hauria de ser una propietar stàtica de Sprite en ES6
+        gameManager,
+        assetManager,
+        gametime,
+
+        gameCanvas,
+        gameContext,
+
+
+        updatedSprites = [],
 
         entitiesRepository = (function () {
             var entities = {},
@@ -75,7 +82,7 @@ var IOC_INVADERS = function (config) {
                         console.error("No es troba la entitat: ", entity);
                     }
                     entity.position = position;
-                    entity.speedController = speed;
+                    entity.speed = speed;
 
                     return entity;
                 }
@@ -87,43 +94,43 @@ var IOC_INVADERS = function (config) {
                 movement_pattern_a: function () {
                     // Inicialització
                     if (!this.extra.ready) {
-                        this.extra.speedController = Math.max(Math.abs(this.speedController.x), Math.abs(this.speedController.y));
-                        this.extra.leftEdge = this.position.x - 10 * this.extra.speedController;
-                        this.extra.rightEdge = this.position.x + 10 * this.extra.speedController;
-                        this.extra.topEdge = this.position.y + 10 * this.extra.speedController;
-                        this.extra.bottomEdge = this.position.y - 10 * this.extra.speedController;
-                        this.extra.direction = {x: this.speedController.x <= 0 ? -1 : 1, y: 1};
+                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
+                        this.extra.leftEdge = this.position.x - 10 * this.extra.speed;
+                        this.extra.rightEdge = this.position.x + 10 * this.extra.speed;
+                        this.extra.topEdge = this.position.y + 10 * this.extra.speed;
+                        this.extra.bottomEdge = this.position.y - 10 * this.extra.speed;
+                        this.extra.direction = {x: this.speed.x <= 0 ? -1 : 1, y: 1};
                         this.extra.ready = true;
                     }
 
-                    this.position.x += this.speedController.x;
-                    this.position.y += this.speedController.y * this.extra.direction.y;
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y * this.extra.direction.y;
 
 
                     if (this.position.y > this.extra.topEdge || this.position.y < this.extra.bottomEdge) {
-                        this.speedController.x = this.extra.direction.x >= 0 ? this.extra.speedController : -this.extra.speedController;
-                        this.speedController.y = 0;
+                        this.speed.x = this.extra.direction.x >= 0 ? this.extra.speed : -this.extra.speed;
+                        this.speed.y = 0;
                         this.extra.direction.y = -this.extra.direction.y;
                     }
 
                     if (this.position.x <= this.extra.leftEdge) {
-                        this.speedController.x = 0;
-                        this.speedController.y = this.extra.speedController;
-                        this.extra.leftEdge = this.position.x - 10 * this.extra.speedController;
+                        this.speed.x = 0;
+                        this.speed.y = this.extra.speed;
+                        this.extra.leftEdge = this.position.x - 10 * this.extra.speed;
                     } else if (this.position.x >= this.extra.rightEdge) {
-                        this.speedController.x = 0;
-                        this.speedController.y = this.extra.speedController;
-                        this.extra.rightEdge = this.position.x + 10 * this.extra.speedController;
+                        this.speed.x = 0;
+                        this.speed.y = this.extra.speed;
+                        this.extra.rightEdge = this.position.x + 10 * this.extra.speed;
                     }
 
                     this.position.y = this.position.y.clamp(this.extra.bottomEdge, this.extra.topEdge);
                 },
 
-                movement_pattern_b: function () { // TODO falta solucionar como se añaden los extras
+                movement_pattern_b: function () {
                     // Inicialització
 
-                    this.position.x += this.speedController.x;
-                    this.position.y += this.speedController.y;
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y;
 
                 },
 
@@ -132,46 +139,46 @@ var IOC_INVADERS = function (config) {
 
                     if (!this.extra.ready) {
                         this.extra.age = 0;
-                        this.extra.speedController = Math.max(Math.abs(this.speedController.x), Math.abs(this.speedController.y));
+                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
                         this.extra.ready = true;
-                        this.extra.vertical = this.speedController.x > this.speedController.y;
+                        this.extra.vertical = this.speed.x > this.speed.y;
                     }
 
                     if (this.extra.direction === 1) {
-                        this.speedController.x = this.extra.speedController * Math.cos(-this.extra.age * Math.PI / 64);
+                        this.speed.x = this.extra.speed * Math.cos(-this.extra.age * Math.PI / 64);
 
                     } else {
-                        this.speedController.y = this.extra.speedController * Math.sin(this.extra.age * Math.PI / 64);
+                        this.speed.y = this.extra.speed * Math.sin(this.extra.age * Math.PI / 64);
 
                     }
 
                     this.extra.age++;
-                    this.position.x += this.speedController.x;
-                    this.position.y += this.speedController.y;
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y;
 
                 },
 
-                movement_pattern_d: function () { // TODO identic a movement_pattern_d però amb cos
+                movement_pattern_d: function () {
                     // Inicialització
 
                     if (!this.extra.ready) {
                         this.extra.age = 0;
-                        this.extra.speedController = Math.max(Math.abs(this.speedController.x), Math.abs(this.speedController.y));
+                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
                         this.extra.ready = true;
-                        this.extra.vertical = this.speedController.x > this.speedController.y;
+                        this.extra.vertical = this.speed.x > this.speed.y;
                     }
 
                     if (this.extra.direction === 1) {
-                        this.speedController.x = this.extra.speedController * Math.cos(this.extra.age * Math.PI / 64);
+                        this.speed.x = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
 
                     } else {
-                        this.speedController.y = this.extra.speedController * Math.cos(this.extra.age * Math.PI / 64);
+                        this.speed.y = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
 
                     }
 
                     this.extra.age++;
-                    this.position.x += this.speedController.x;
-                    this.position.y += this.speedController.y;
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y;
 
                 }
 
@@ -310,8 +317,8 @@ var IOC_INVADERS = function (config) {
         movingGameObjectConstructor = function (options) {
             var that = gameObjectConstructor(options);
 
-            that.isColliding = false;
-            that.speedController = null;
+            that.isDestroyed = false;
+            that.speed = null;
             that.outsideBoundariesTime = 0;
 
             that.update = function () {
@@ -387,7 +394,7 @@ var IOC_INVADERS = function (config) {
 
                 assetManager.getSound(data.sound);
 
-                that.speedController = data.speedController;
+                that.speed = data.speed;
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = data.extra || {};
@@ -398,7 +405,7 @@ var IOC_INVADERS = function (config) {
             };
 
             that.clear = function () {
-                that.isColliding = false;
+                that.isDestroyed = false;
                 that.alive = false;
                 that.outsideBoundariesTime = 0;
 
@@ -406,7 +413,7 @@ var IOC_INVADERS = function (config) {
                 that.position = {x: 0, y: 0};
                 that.sprite = null;
 
-                that.speedController = {x: 0, y: 0};
+                that.speed = {x: 0, y: 0};
 
                 // Dades i Funcions especifiques de cada tipus de enemic
                 that.extra = {};
@@ -416,7 +423,7 @@ var IOC_INVADERS = function (config) {
 
             that.update = function () {
 
-                if (that.isColliding) {
+                if (that.isDestroyed) {
                     return true;
                 }
 
@@ -471,7 +478,7 @@ var IOC_INVADERS = function (config) {
                 that.cannon = data.cannon;
                 that.explosion = data.explosion;
 
-                that.speedController = data.speedController;
+                that.speed = data.speed;
                 that.points = data.points;
 
                 that.outsideBoundariesTime = 0;
@@ -486,14 +493,14 @@ var IOC_INVADERS = function (config) {
             };
 
             that.clear = function () {
-                that.isColliding = false;
+                that.isDestroyed = false;
                 that.alive = false;
 
                 that.type = null;
                 that.position = {x: 0, y: 0};
                 that.sprite = null;
 
-                that.speedController = {x: 0, y: 0};
+                that.speed = {x: 0, y: 0};
                 that.points = 0;
                 that.cannon = null;
 
@@ -511,9 +518,8 @@ var IOC_INVADERS = function (config) {
             that.update = function () {
 
                 // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
-                if (that.isColliding) {
-                    that.explosionPool.instantiate(that.explosion, that.position); // TODO canviar pel punt central del sprite
-                    //that.explosionPool.instantiate('enemy_explosion', that.position); // TODO canviar pel punt central del sprite
+                if (that.isDestroyed) {
+                    that.explosionPool.instantiate(that.explosion, that.position);
                     return true;
                 }
 
@@ -538,7 +544,7 @@ var IOC_INVADERS = function (config) {
         playerConstructor = function (options) {
             var that = spaceshipConstructor(options);
 
-            that.start(entitiesRepository.get('player', options.position, options.speedController)); // TODO la posició inicial
+            that.start(entitiesRepository.get('player', options.position, options.speed));
 
             that.shoot = function (cannon) {
                 var origin;
@@ -551,21 +557,21 @@ var IOC_INVADERS = function (config) {
 
             var getInput = function () {
                 if (inputController.KEY_STATUS.left) {
-                    that.position.x -= that.speedController.x;
+                    that.position.x -= that.speed.x;
 
                 } else if (inputController.KEY_STATUS.right) {
-                    that.position.x += that.speedController.x;
+                    that.position.x += that.speed.x;
 
                 }
 
                 if (inputController.KEY_STATUS.up) {
-                    that.position.y -= that.speedController.y;
+                    that.position.y -= that.speed.y;
 
                 } else if (inputController.KEY_STATUS.down) {
-                    that.position.y += that.speedController.y;
+                    that.position.y += that.speed.y;
                 }
 
-                if (inputController.KEY_STATUS.space && !that.isColliding) {
+                if (inputController.KEY_STATUS.space && !that.isDestroyed) {
                     that.fire();
                 }
 
@@ -580,7 +586,7 @@ var IOC_INVADERS = function (config) {
                 updateCannon();
 
                 // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
-                if (this.isColliding) {
+                if (this.isDestroyed) {
                     that.explosionPool.instantiate(that.explosion, that.position);
                     return true;
                 }
@@ -628,10 +634,9 @@ var IOC_INVADERS = function (config) {
                     }
                 },
 
-
                 move = function (layer) {
-                    layer.position.x += layer.speedController.x * speedController.value;
-                    layer.position.y += layer.speedController.y * speedController.value;
+                    layer.position.x += layer.speed.x * speedController.value;
+                    layer.position.y += layer.speed.y * speedController.value;
 
                     if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
                         layer.position.x = 0;
@@ -668,8 +673,8 @@ var IOC_INVADERS = function (config) {
             that.start = function (data) {
                 layers = data.layers;
 
-                speedController.value = data.speedController.start;
-                speedController.target = data.speedController.target;
+                speedController.value = data.speed.start;
+                speedController.target = data.speed.target;
 
                 for (var i = 0; i < layers.length; i++) {
                     layers[i].image = assetManager.getImage(layers[i].id);
@@ -680,7 +685,7 @@ var IOC_INVADERS = function (config) {
 
             that.clear = function () {
                 layers = {};
-                speedController.reset();
+                speed.reset();
             };
 
 
@@ -727,8 +732,6 @@ var IOC_INVADERS = function (config) {
                 }
             };
 
-            // TODO: En aquest projecte no el fem servir perqué només tenim un canvas i es redibuixa completament
-
             that.render = function () {
 
                 if (that.isDone) {
@@ -745,22 +748,21 @@ var IOC_INVADERS = function (config) {
                     that.position.y,
                     width / numberOfFrames,
                     height);
-
             };
-
 
             return that;
         },
 
-        // TODO s'ha de fer un pool de sprites i que es retorni el primer lliure, per evitar els problemas de que tots els sprites van amb el mateix frame
         assetManagerConstructor = function (progressCallback) {
             var that = {},
                 successCount = 0,
                 errorCount = 0,
-                downloadQueue = [],// TODO convertir en un unic objecte que contingui totes les cues
-                spritesQueue = [],
-                soundsQueue = [],
-                musicQueue = [],
+                queue = {
+                    images: [],
+                    sprites: [],
+                    sounds: [],
+                    music: []
+                },
                 cache = {
                     images: {},
                     sprites: {},
@@ -768,44 +770,29 @@ var IOC_INVADERS = function (config) {
                     music: {}
                 },
                 intervals = {},
-                currentSong;
+                currentSong,
 
-            updateProgress = function () {
-                if (progressCallback) {
-                    progressCallback(successCount + errorCount, downloadQueue.length);
-                }
+                updateProgress = function () {
+                    if (progressCallback) {
+                        progressCallback(successCount + errorCount, queue.images.length);
+                    }
+                };
+
+            that.queueAsset = function (type, asset) {
+                queue[type].push(asset);
             };
-
-
-            that.queueDownload = function (asset) {
-                downloadQueue.push(asset);
-            };
-
-            that.queueSprites = function (asset) {
-                spritesQueue.push(asset);
-            };
-
-            that.queueSounds = function (asset) {
-                soundsQueue.push(asset);
-            };
-
-            that.queueMusic = function (asset) {
-                musicQueue.push(asset);
-            };
-
 
             that.downloadAll = function (callback, args) {
-                var i, j, pool, poolSize, sound;
+                var i;
 
-                if (downloadQueue.length === 0) {
+                if (queue.images.length === 0) {
                     callback();
                 }
 
-
-                // Primer descarreguem les imatges
-                for (i = 0; i < downloadQueue.length; i++) {
-                    var path = downloadQueue[i].path,
-                        id = downloadQueue[i].id,
+                // Primer es descarregan les imatges
+                for (i = 0; i < queue.images.length; i++) {
+                    var path = queue.images[i].path,
+                        id = queue.images[i].id,
                         img = new Image();
 
                     img.addEventListener("load", function () {
@@ -830,13 +817,12 @@ var IOC_INVADERS = function (config) {
 
                 generateSounds();
                 generateMusic();
-
             };
 
             var generateSprites = function () {
                 var pool;
 
-                for (var i = 0; i < spritesQueue.length; i++) {
+                for (var i = 0; i < queue.sprites.length; i++) {
 
                     pool = [];
 
@@ -844,42 +830,39 @@ var IOC_INVADERS = function (config) {
 
                     for (var j = 0; j < poolSize; j++) {
                         pool.push(spriteConstructor({
-                                image: that.getImage(spritesQueue[i].id),
-                                numberOfFrames: spritesQueue[i].numberOfFrames,
-                                ticksPerFrame: spritesQueue[i].ticksPerFrame,
-                                loop: spritesQueue[i].loop === undefined ? true : spritesQueue[i].loop
+                                image: that.getImage(queue.sprites[i].id),
+                                numberOfFrames: queue.sprites[i].numberOfFrames,
+                                ticksPerFrame: queue.sprites[i].ticksPerFrame,
+                                loop: queue.sprites[i].loop === undefined ? true : queue.sprites[i].loop
                             }
                         ));
                     }
 
-                    cache.sprites[spritesQueue[i].id] = pool;
+                    cache.sprites[queue.sprites[i].id] = pool;
                 }
-
             };
 
             var generateSounds = function () {
                 var pool, poolSize, sound;
-                for (var i = 0; i < soundsQueue.length; i++) {
+                for (var i = 0; i < queue.sounds.length; i++) {
                     pool = [];
-                    poolSize = 10; // TODO nombre màxim de sons identics que es reprodueixen al mateix temps
+                    poolSize = 10; // nombre màxim de sons identics que es reprodueixen al mateix temps
                     for (var j = 0; j < poolSize; j++) {
-                        //Initialize the sound
-                        sound = new Audio(soundsQueue[i].path);
-                        sound.volume = soundsQueue[i].volume;
-                        sound.load(); // TODO això es necessari pels navegadorsm és antics, si funciona amb FF i Chrome ho esborremt
+                        var sound = new Audio(queue.sounds[i].path);
+                        sound.volume = queue.sounds[i].volume;
                         pool.push(sound);
                     }
-                    cache.sounds[soundsQueue[i].id] = {
+                    cache.sounds[queue.sounds[i].id] = {
                         currentSound: 0,
                         pool: pool,
-                        volume: soundsQueue[i].volume,
+                        volume: queue.sounds[i].volume,
                     }
 
                 }
             };
 
             that.isDone = function () {
-                return (downloadQueue.length == successCount + errorCount);
+                return (queue.images.length == successCount + errorCount);
             };
 
             that.getImage = function (id) {
@@ -917,7 +900,7 @@ var IOC_INVADERS = function (config) {
             var fadeOutAudio = function () {
                 for (var id in cache.sounds) {
                     for (var i = 0; i < cache.sounds[id].pool.length; i++) {
-                        sound = cache.sounds[id].pool[i];
+                        var sound = cache.sounds[id].pool[i];
                         sound.volume = 0;
                     }
                 }
@@ -928,7 +911,7 @@ var IOC_INVADERS = function (config) {
 
                 for (var id in cache.sounds) {
                     for (var i = 0; i < cache.sounds[id].pool.length; i++) {
-                        sound = cache.sounds[id].pool[i];
+                        var sound = cache.sounds[id].pool[i];
                         sound.volume = cache.sounds[id].volume;
                     }
                 }
@@ -939,17 +922,13 @@ var IOC_INVADERS = function (config) {
                 clearInterval(intervals.fadeOutAudio);
             };
 
-            that.queueMusic = function (asset) {
-                musicQueue.push(asset);
-            };
 
             var generateMusic = function () {
-                for (var i = 0; i < musicQueue.length; i++) {
-                    sound = new Audio(musicQueue[i].path);
-                    sound.volume = musicQueue[i].volume;
-                    sound.loop = musicQueue[i].loop;
-                    sound.load(); // TODO això es necessari pels navegadorsm és antics, si funciona amb FF i Chrome ho esborremt
-                    cache.music[musicQueue[i].id] = sound;
+                for (var i = 0; i < queue.music.length; i++) {
+                    var sound = new Audio(queue.music[i].path);
+                    sound.volume = queue.music[i].volume;
+                    sound.loop = queue.music[i].loop;
+                    cache.music[queue.music[i].id] = sound;
                 }
             };
 
@@ -997,16 +976,14 @@ var IOC_INVADERS = function (config) {
 
                 player,
 
-                state,// "GameOver", "LoadingNextLevel", "Runnin" TODO: substituir per un enum
+                state,
 
 
-                initEnvironment = function (data) { // TODO: Esta puede ser privada, o ser sustituida por init
+                initEnvironment = function (data) {
                     gameCanvas = document.getElementById(data.canvas.game);
                     gameContext = gameCanvas.getContext("2d");
 
-
-                    explosionPool = poolConstructor(100, explosionConstructor/*, {pool: {sound: soundPool}}*/);
-
+                    explosionPool = poolConstructor(100, explosionConstructor);
 
                     enemyShotPool = poolConstructor(500, shotConstructor);
                     enemyPool = poolConstructor(100, spaceshipConstructor, {
@@ -1016,12 +993,9 @@ var IOC_INVADERS = function (config) {
                         }
                     });
 
-                    playerShotPool = poolConstructor(100, shotConstructor/*, {pool: {sound: soundPool}}*/);
-
-                    //soundPool =  poolConstructor(100, explosionConstructor);
+                    playerShotPool = poolConstructor(100, shotConstructor);
 
                     that.loadAssets(data.assets);
-
                 },
 
                 ui = (function () {
@@ -1099,25 +1073,15 @@ var IOC_INVADERS = function (config) {
             };
 
             that.loadAssets = function (assets) {
-                var i;
-                // Descarreguem les imatges i generem els sprites
-                for (i = 0; i < assets.images.length; i++) {
-                    assetManager.queueDownload(assets.images[i]);
-                }
-                for (i = 0; i < assets.sprites.length; i++) {
-                    assetManager.queueSprites(assets.sprites[i]);
-                }
+                var i, type;
 
-                for (i = 0; i < assets.sounds.length; i++) {
-                    assetManager.queueSounds(assets.sounds[i]);
-                }
-
-                for (i = 0; i < assets.music.length; i++) {
-                    assetManager.queueMusic(assets.music[i]);
+                for (type in assets) {
+                    for (i = 0; i < assets[type].length; i++) {
+                        assetManager.queueAsset(type, assets[type][i]);
+                    }
                 }
 
                 assetManager.downloadAll(that.loadEnemiesData);
-
             };
 
 
@@ -1136,7 +1100,6 @@ var IOC_INVADERS = function (config) {
                 });
             };
 
-
             that.start = function () {
 
                 background = backgroundConstructor({
@@ -1149,7 +1112,6 @@ var IOC_INVADERS = function (config) {
             };
 
             that.startLevel = function (level) {
-
                 var message = levels[level].name
                     + "<p><span>"
                     + levels[level].description
@@ -1167,13 +1129,12 @@ var IOC_INVADERS = function (config) {
             };
 
 
-            function update() { // TODO: eliminar després de les proves o canviar el nom a update <-- altre opció es fer que desde el gameLoop es cridint els diferents mètodes: Update(), DetectCollisions(), etc.
+            function update() {
                 window.requestAnimationFrame(update);
 
                 updatedSprites = [];
 
-                spawner();
-
+                updateWaves();
                 detectCollisions();
 
                 background.update();
@@ -1182,12 +1143,15 @@ var IOC_INVADERS = function (config) {
                 playerShotPool.update();
 
 
-                if (player.isColliding && state != "GameOver") {
+                if (player.isDestroyed && state != GameState.GAME_OVER) {
                     setGameOver();
-                } else if (enemyPool.actives === 0 && levelEnded && state != "GameOver" && state != "LoadingNextLevel") {
+
+                } else if (enemyPool.actives === 0 && levelEnded && state != GameState.GAME_OVER
+                    && state != GameState.LOADING_NEXT_LEVEL) {
+
                     ui.transitionScreen(setEndLevel)
-                    state = "LoadingNextLevel";
-                } else if (state != "GameOver") {
+                    state = GameState.LOADING_NEXT_LEVEL;
+                } else if (state != GameState.GAME_OVER) {
                     player.update();
                     distance++;
                 }
@@ -1203,40 +1167,35 @@ var IOC_INVADERS = function (config) {
                 var impactInfo,
                     i;
 
-
                 // bala del jugador amb enemic
                 impactInfo = detectCollisionsPoolWithPool(playerShotPool, enemyPool);
 
-                // TODO: en lloc de fer la destrucció automàtica afegir els mètodes per danyar al enemic
                 if (impactInfo.length > 0) {
                     for (i = 0; i < impactInfo.length; i++) {
-                        impactInfo[i].source.isColliding = true; // TODO: canviar el nom a isDestroyed
-                        impactInfo[i].target.isColliding = true; // TODO: canviar el nom a isDestroyed
+                        impactInfo[i].source.isDestroyed = true;
+                        impactInfo[i].target.isDestroyed = true;
                         score += impactInfo[i].target.points;
                         //console.log("points", impactInfo[i].target.points);
                     }
-
                 }
 
                 // bala del enemic amb jugador
                 impactInfo = detectCollisionsPoolWithGameObject(enemyShotPool, player);
 
-                // TODO: en lloc de fer la destrucció automàtica afegir els mètodes per danyar al enemic
                 if (impactInfo.length > 0) {
                     for (i = 0; i < impactInfo.length; i++) {
-                        impactInfo[i].source.isColliding = true; // TODO: canviar el nom a isDestroyed
-                        impactInfo[i].target.isColliding = true; // TODO: canviar el nom a isDestroyed
+                        impactInfo[i].source.isDestroyed = true;
+                        impactInfo[i].target.isDestroyed = true;
 
                     }
-
                 }
 
                 // enemic amb jugador
                 impactInfo = detectCollisionsPoolWithGameObject(enemyPool, player);
                 if (impactInfo.length > 0) {
                     for (i = 0; i < impactInfo.length; i++) {
-                        impactInfo[i].source.isColliding = true; // TODO: canviar el nom a isDestroyed
-                        impactInfo[i].target.isColliding = true; // TODO: canviar el nom a isDestroyed
+                        impactInfo[i].source.isDestroyed = true;
+                        impactInfo[i].target.isDestroyed = true;
                     }
                 }
 
@@ -1282,24 +1241,13 @@ var IOC_INVADERS = function (config) {
                 return impacts;
             }
 
-
-            // TODO: Crear un objecte privat distance que s'encarregui de cridar aquest mètodes amb un update() i dedicar
-            // el spwaner realment a spawnejar enemics
-            function spawner() {
+            function updateWaves(){
                 var waves = levels[currentLevel].waves,
                     currentWave;
 
                 if (nextWave < waves.length && distance >= waves[nextWave].distance) {
                     currentWave = waves[nextWave];
-
-                    for (var i = 0; i < currentWave.spawns.length; i++) {
-                        if (!currentWave.spawns[i].formation) { // Si no te formació es tracta d'un enemic unic
-                            spawnEnemy(currentWave.spawns[i]);
-                        } else {
-                            spawnFormation(currentWave.spawns[i]);
-                        }
-                    }
-
+                    spawner(currentWave.spawns);
                     nextWave++;
                 }
 
@@ -1308,8 +1256,18 @@ var IOC_INVADERS = function (config) {
                 }
             }
 
+            function spawner(spawns) {
+                for (var i = 0; i < spawns.length; i++) {
+                    if (!spawns[i].formation) {
+                        spawnEnemy(spawns[i]);
+                    } else {
+                        spawnFormation(spawns[i]);
+                    }
+                }
+            }
+
             function spawnEnemy(enemy) {
-                enemyPool.instantiate(enemy.type, enemy.position, enemy.speedController);
+                enemyPool.instantiate(enemy.type, enemy.position, enemy.speed);
             }
 
             function spawnFormation(wave) {
@@ -1323,20 +1281,17 @@ var IOC_INVADERS = function (config) {
                 switch (wave.formation.type) {
                     case "columns":
 
-                        // TODO aquestes variables s'han de poder eliminar en la seva major part. COMPTE: s'ha de crear una nova posició per cada objecte que instanciem o es canvien totes a l'hora.
                         originPosition = {x: wave.position.x, y: wave.position.y};
                         spacer = wave.formation.spacer;
                         nextColumn = originPosition.y + wave.formation.column_height;
                         currentPosition = {x: wave.position.x, y: wave.position.y};
-
 
                         for (i = 0; i < wave.formation.amount; i++) {
 
                             enemyPool.instantiate(wave.type, {
                                 x: currentPosition.x,
                                 y: currentPosition.y
-                            }, wave.speedController);
-
+                            }, wave.speed);
 
                             currentPosition.y += spacer;
 
@@ -1345,9 +1300,7 @@ var IOC_INVADERS = function (config) {
                                 currentPosition.x += spacer;
                                 currentPosition.y = originPosition.y;
                             }
-
                         }
-
                         break;
 
                     case "grid":
@@ -1360,11 +1313,10 @@ var IOC_INVADERS = function (config) {
                                 enemyPool.instantiate(wave.type, {
                                     x: originPosition.x + (spacer * i),
                                     y: originPosition.y + (spacer * j)
-                                }, wave.speedController);
+                                }, wave.speed);
 
                             }
                         }
-
 
                         break;
 
@@ -1376,7 +1328,7 @@ var IOC_INVADERS = function (config) {
                             enemyPool.instantiate(wave.type, {
                                 x: originPosition.x + (spacer * i),
                                 y: originPosition.y
-                            }, wave.speedController);
+                            }, wave.speed);
                         }
                         break;
 
@@ -1388,7 +1340,7 @@ var IOC_INVADERS = function (config) {
                             enemyPool.instantiate(wave.type, {
                                 x: originPosition.x,
                                 y: originPosition.y + (spacer * i)
-                            }, wave.speedController);
+                            }, wave.speed);
                         }
                         break;
 
@@ -1413,13 +1365,13 @@ var IOC_INVADERS = function (config) {
                 playerShotPool.clear();
 
                 that.startLevel(currentLevel);
-                state = "Running";
+                state = GameState.RUNNING;
             }
 
 
             function setGameOver() {
                 player.update();
-                state = "GameOver";
+                state = GameState.GAME_OVER;
 
                 ui.hideMessage();
                 ui.showGameOver();
@@ -1433,7 +1385,6 @@ var IOC_INVADERS = function (config) {
 
             that.restart = function () {
 
-                //this.gameOverAudio.pause();
                 ui.hideGameOver();
                 assetManager.fadeInAudio();
 
@@ -1444,14 +1395,12 @@ var IOC_INVADERS = function (config) {
                             explosion: explosionPool
                         },
                         position: {x: 10, y: 256},
-                        speedController: {x: 4, y: 4}
+                        speed: {x: 4, y: 4}
                     });
 
                 currentLevel = 0;
                 score = 0;
-                state = "Running";
-
-                //that.startLevel(currentLevel);
+                state = GameState.RUNNING;
 
                 enemyPool.clear();
                 explosionPool.clear();
@@ -1460,24 +1409,12 @@ var IOC_INVADERS = function (config) {
 
                 assetManager.resetMusic(levels[currentLevel].music);
 
-                //this.backgroundAudio.currentTime = 0;
                 ui.fadeIn();
                 that.startLevel(currentLevel);
-
-                //this.start();
-            };
-
-            /**
-             * Aquesta funció esborra tot el canvas. Com que el nostre joc fa servir imatges a pantalla completa no
-             * caldra al gameLoop però es pot fer servir per altres pantalles
-             */
-            that.clearScreen = function () {
-                gameContext.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             };
 
             return that;
         },
-
 
         /**
          * Crea les instancias dels gestors i controladors i inicia el joc.
@@ -1489,7 +1426,6 @@ var IOC_INVADERS = function (config) {
                 //console.log("Downloaded asset: " + current + "/" + total);
             });
 
-            // Iniciem el joc
             gameManager.init();
         },
 
@@ -1497,8 +1433,6 @@ var IOC_INVADERS = function (config) {
             gameManager.restart();
         };
 
-
-// Aquest son els mètodes de IOC_INVADERS que son accesibles desde el espai global
     return {
         start: init,
 
