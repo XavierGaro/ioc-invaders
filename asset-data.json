@@ -62,22 +62,6 @@
         "path": "assets/images/blast_sprite_2.png"
       },
       {
-        "id": "bullet_player_3",
-        "path": "assets/images/blast_sprite_3.png"
-      },
-      {
-        "id": "bullet_player_4",
-        "path": "assets/images/blast_sprite_4.png"
-      },
-      {
-        "id": "bullet_player_5",
-        "path": "assets/images/blast_sprite_5.png"
-      },
-      {
-        "id": "bullet_player_6",
-        "path": "assets/images/plasma_sprite.png"
-      },
-      {
         "id": "bullet_enemy",
         "path": "assets/images/alien_blast_sprite.png"
       },
@@ -107,26 +91,6 @@
         "ticksPerFrame": 6
       },
       {
-        "id": "bullet_player_3",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 8
-      },
-      {
-        "id": "bullet_player_4",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 10
-      },
-      {
-        "id": "bullet_player_5",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 12
-      },
-      {
-        "id": "bullet_player_6",
-        "numberOfFrames": 2,
-        "ticksPerFrame": 8
-      },
-      {
         "id": "explosion_enemy",
         "numberOfFrames": 8,
         "ticksPerFrame": 6,
@@ -134,7 +98,7 @@
       },
       {
         "id": "explosion_player",
-        "numberOfFrames": 5,
+        "numberOfFrames": 8,
         "ticksPerFrame": 6,
         "loop": false
       },
@@ -171,18 +135,8 @@
         "volume": 0.15
       },
       {
-        "id": "laser_gun",
-        "path": "assets/sounds/laser_gun.mp3",
-        "volume": 0.15
-      },
-      {
         "id": "laser",
         "path": "assets/sounds/laser.mp3",
-        "volume": 0.15
-      },
-      {
-        "id": "alien_death_ray",
-        "path": "assets/sounds/alien_death_ray.mp3",
         "volume": 0.15
       },
       {
@@ -198,8 +152,8 @@
     ],
     "music": [
       {
-        "id": "rocketman",
-        "path": "assets/sounds/POL-rocketman-short.mp3",
+        "id": "defense-line",
+        "path": "assets/sounds/defense-line.mp3",
         "loop": true,
         "volume": 0.25
       },
@@ -210,8 +164,8 @@
         "volume": 1
       },
       {
-        "id": "sunset",
-        "path" : "assets/sounds/POL-sunset-route-short.mp3",
+        "id": "star-commander",
+        "path" : "assets/sounds/star-commander-1.mp3",
         "loop" : true,
         "volume": 0.25
       }

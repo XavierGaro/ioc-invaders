@@ -5,18 +5,32 @@
       "type": "player",
       "sprite": "spaceship",
       "explosion": "player_explosion",
-      "cannon": {
-        "bullet": "plasma_shot_1",
-        "fireRate": 15,
-        "position": {
-          "x": 30,
-          "y": 10
+      "cannon": [
+        {
+          "bullet": "plasma_shot_1",
+          "fireRate": 15,
+          "position": {
+            "x": 35,
+            "y": 5
+          },
+          "direction": {
+            "x": 5,
+            "y": 0
+          }
         },
-        "direction": {
-          "x": 5,
-          "y": 0
+        {
+          "bullet": "plasma_shot_1",
+          "fireRate": 15,
+          "position": {
+            "x": 35,
+            "y": 45
+          },
+          "direction": {
+            "x": 5,
+            "y": 0
+          }
         }
-      }
+      ]
     }
   },
   {
@@ -26,18 +40,20 @@
       "sprite": "alien_a",
       "explosion": "enemy_explosion",
       "points": 10,
-      "cannon": {
-        "bullet": "standard_shot",
-        "fireRate": 1,
-        "position": {
-          "x": -5,
-          "y": 14
-        },
-        "direction": {
-          "x": -5,
-          "y": 0
+      "cannon": [
+        {
+          "bullet": "standard_shot",
+          "fireRate": 1,
+          "position": {
+            "x": -5,
+            "y": 14
+          },
+          "direction": {
+            "x": -5,
+            "y": 0
+          }
         }
-      },
+      ],
       "move": "movement_pattern_a"
     }
   },
@@ -48,18 +64,20 @@
       "sprite": "alien_b",
       "explosion": "enemy_explosion",
       "points": 15,
-      "cannon": {
-        "bullet": "wave_shot_a",
-        "fireRate": 1,
-        "position": {
-          "x": -5,
-          "y": 14
-        },
-        "direction": {
-          "x": -5,
-          "y": 0
+      "cannon": [
+        {
+          "bullet": "wave_shot_a",
+          "fireRate": 1,
+          "position": {
+            "x": -5,
+            "y": 14
+          },
+          "direction": {
+            "x": -5,
+            "y": 0
+          }
         }
-      },
+      ],
       "move": "movement_pattern_b"
     }
   },
@@ -70,18 +88,20 @@
       "sprite": "alien_c",
       "explosion": "enemy_explosion",
       "points": 30,
-      "cannon": {
-        "bullet": "standard_shot",
-        "fireRate": 2,
-        "position": {
-          "x": 10,
-          "y": 14
-        },
-        "direction": {
-          "x": 0,
-          "y": 3
+      "cannon": [
+        {
+          "bullet": "standard_shot",
+          "fireRate": 2,
+          "position": {
+            "x": 10,
+            "y": 14
+          },
+          "direction": {
+            "x": 0,
+            "y": 3
+          }
         }
-      },
+      ],
       "move": "movement_pattern_c"
     }
   },
@@ -92,18 +112,20 @@
       "sprite": "alien_c",
       "explosion": "enemy_explosion",
       "points": 30,
-      "cannon": {
-        "bullet": "standard_shot",
-        "fireRate": 1,
-        "position": {
-          "x": 5,
-          "y": -5
-        },
-        "direction": {
-          "x": 0,
-          "y": -3
+      "cannon": [
+        {
+          "bullet": "standard_shot",
+          "fireRate": 1,
+          "position": {
+            "x": 5,
+            "y": -5
+          },
+          "direction": {
+            "x": 0,
+            "y": -3
+          }
         }
-      },
+      ],
       "move": "movement_pattern_c"
     }
   },
@@ -195,42 +217,6 @@
       "sprite": "bullet_player_2",
       "sound": "shoot",
       "move": "movement_pattern_b"
-    }
-  },
-  {
-    "name": "plasma_shot_3",
-    "data": {
-      "type": "shot",
-      "sprite": "bullet_player_3",
-      "sound": "shoot",
-      "move": "movement_pattern_b"
-    }
-  },
-  {
-    "name": "plasma_shot_4",
-    "data": {
-      "type": "shot",
-      "sprite": "bullet_player_4",
-      "sound": "shoot",
-      "move": "movement_pattern_b"
-    }
-  },
-  {
-    "name": "plasma_shot_5",
-    "data": {
-      "type": "shot",
-      "sprite": "bullet_player_5",
-      "sound": "shoot",
-      "move": "movement_pattern_b"
-    }
-  },
-  {
-    "name": "hot_plasma_shot",
-    "data": {
-      "type": "shot",
-      "sprite": "bullet_player_6",
-      "sound": "shoot",
-      "move": "movement_pattern_c"
     }
   },
   {

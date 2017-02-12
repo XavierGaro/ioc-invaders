@@ -3,23 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <title>IOC Invaders</title>
+    <link href="https://fonts.googleapis.com/css?family=Russo+One" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Exo" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
+
 </head>
 <body>
 
-<canvas id="game-canvas" width="1024" height="512" class="fadeable">
-    Your browser does not support canvas. Please try again with a different browser.
-</canvas>
+<h1>IOC INVADERS</h1>
 
-<div class="score">SCORE: <span id="score"></span></div>
-<div class="distance">DISTANCE: <span id="distance"></span></div>
-<div class="actives">ACTIVES: <span id="actives"></span></div>
-<div class="game-over" id="game-over">GAME OVER<p><span>Restart</span></p></div>
-<div class="messages fadeable" id="messages"></div>
+<div class="game-background">
+    <canvas id="game-canvas" width="1024" height="512" class="fadeable">
+        Your browser does not support canvas. Please try again with a different browser.
+    </canvas>
+
+    <div class="ui">
+        <div class="score">SCORE: <span id="score"></span></div>
+        <div class="distance">DISTANCE: <span id="distance"></span></div>
+    </div>
+
+    <div class="game-over" id="game-over">GAME OVER<p><span>Restart</span></p></div>
+    <div class="messages fadeable" id="messages"></div>
+</div>
 
 
-<script src="js/ioc-invaders-v2.js">
-    // Quan carrega la pàgina iniciem el joc
+<div class="credits">
+    <h2>CREDITS</h2>
+    <div>
+        <h3>Música</h3>
+        <ul>
+            <li>Defense Line: <a target="_blank" href="https://www.dl-sounds.com/royalty-free/defense-line/">Background
+                Loop</a></li>
+            <li>Star Commander1(<a target="_blank" href="https://www.dl-sounds.com/royalty-free/star-commander1/"> DL
+                Sounds</a>)
+            </li>
+        </ul>
+    </div>
+
+    <div>
+        <h3>Efectes de so</h3>
+        <ul>
+            <li>Laser: <a target="_blank" href="http://soundbible.com/1087-Laser.html"> SoundBible.com</a></li>
+            <li>Explosions: inferno (<a target="_blank" href="http://www.freesound.org/people/inferno/sounds/18384/">
+                freesound.org</a>)
+            </li>
+            <li>Altres - Xavier Garcia Rogríguez</li>
+        </ul>
+    </div>
+
+    <div>
+        <h3>Gràfics</h3>
+        <ul>
+            <li>Naus: sujit1717 (<a target="_blank"
+                                    href="http://opengameart.org/content/complete-spaceship-game-art-pack">Space Odyssey
+                Pack</a>)
+            </li>
+            <li>Fons i trets: Xavier Garcia Rogríguez</li>
+        </ul>
+    </div>
+
+</div>
+<div class="footer">
+    Xavier Garcia Rodríguez 2017. <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Llicencia Apache
+    2.0</a>. Podeu trobar el codi font d'aquest joc a <a target="_blank"
+                                                         href="https://github.com/XavierGaro/ioc-invaders">GitHub</a>.
+</div>
+
+<script src="js/ioc-invaders.js">
 </script>
 
 
@@ -31,10 +81,7 @@
             "levels_data_url": "level-data.json"
         });
 
-        // TODO: Afegir un listener amb el missate Start per començar el joc
         game.start();
-
-
         document.getElementById('game-over').addEventListener('click', game.restart);
 
     }

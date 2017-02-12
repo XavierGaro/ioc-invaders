@@ -1,786 +1,1612 @@
-// Esta será una clase estática
-// TODO para que esta clase sea reutilizable el canvas hay que pasarlo y los datos de las imagenes hay que pasarlas desde fuera, es decir el parallax manager no se instancia automáticamente como ahora, se crea la clase y se instancia pasandole un canvas y un array con los datos a extraer
+// Drets de autor
+// laser_gun.mp3: http://soundbible.com/1769-Laser-Gun.html
+// laser.mp3: http://soundbible.com/1087-Laser.html
+// alien_death_ray.mp3: http://soundbible.com/1274-Alien-Death-Ray.html
+// large_explosion.mp3: http://www.freesound.org/people/inferno/sounds/18384/
+// laser_rocket.mp3: http://www.freesound.org/people/EcoDTR/sounds/36847/
+// Imatges naus: http://opengameart.org/content/complete-spaceship-game-art-pack
 
-// Añadimos el método clamp al prototipo de Number
+// UTILITATS
+
+/**
+ * Aquesta utilitat afegeix el mètode clamp a la prototip Number. El que fa es afegir el métode clamp a tots els
+ * nombres de manera que podem encaixonar-lo dins d'uns limits. En cas de que el nombre sigui menor que el mínim el
+ * valor retornat es aquest mínim, i en cas de que sigui superior al màxim el valor retornat es el màxim.
+ *
+ * @param {number} min - valor mínim
+ * @param {number} max - valor máxim
+ * @returns {number} - El nombre si està dins del limit o el valor corresponent al limit
+ */
 Number.prototype.clamp = function (min, max) {
     return Math.min(Math.max(this, min), max);
 };
 
-
-// Esta clase se encarga de gestionar el scroll parallax. El orden en que se pasan las capas determina cual está en el fondo y la velocidad relativa respecto al resto
-
-var ParallaxManager = function (canvas, layers) {
-    this.layers = [];
-    this.canvas = document.getElementById(canvas); // TODO: Esto debe pasarse como argumento del constructor
-    this.context = this.canvas.getContext("2d");
-
-    // @private creamos el draweable y le añadimos el método draw personalizado, en ES2015 sustituir por subclase
-    this.generateParallaxLayer = function (src, speed) {
-        var layer = new Drawable(src, speed, 0, 0, this.canvas.width, this.canvas.height);
-        layer.context = this.context;
-        //layer.setSize(this.canvas.width, this.canvas.height);
-
-        // @override
-        layer.draw = function () {
-            // start panning the image if auto is true
-            this.x -= this.speed;
-
-            this.context.drawImage(this.image, this.x, this.y, this.width, this.height);
-            // "draw" a duplicate image the right of the original image
-            this.context.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
-            // if the image is scrolled off the screen it will be reset in its original position
-            if (this.x <= 0 - this.width)
-                this.x = 0;
-
-        };
-
-        return layer;
-
-    };
-
-    // @public, llamado desde el update()
-    this.draw = function () {
-        for (var i = 0; i < this.layers.length; i++) {
-            this.layers[i].draw();
-        }
-    };
-
-    // Inicialización
-    for (var i = 0; i < layers.length; i++) {
-        var layer = this.generateParallaxLayer(layers[i], i + 1); // Tiene que ser +1 porqué si no la capa del fondo queda fija
-        this.layers.push(layer);
-
+/**
+ * Aquesta utilitat afegeix el mètode contains al prototip de Array per permetre comprov
+ *
+ * @param {*} needle - objecte a cercar dins del array
+ * @returns {boolean} - cert si es troba o false en cas contrari
+ */
+Array.prototype.contains = function (needle) {
+    //console.log("Mida d'aquest array: ", this.length);
+    for (var i in this) {
+        if (this[i] == needle) return true;
     }
-
-
+    return false;
 };
 
 
-// Clase abstracta de la que heredaran el resto de drawables
-var Drawable = function (src, speed, x, y, width, height) {
-    this.image = new Image();
-    this.image.src = src;
-    this.speed = speed || 0;
-    this.x = x || 0;
-    this.y = y || 0;
-    this.width = width || this.image.width;
-    this.height = height || this.image.height;
-    this.collidableWith = "";
-    this.type = "";
-    this.isColliding = false;
+/**
+ * Aquest es el mòdul que contindrà el nostre joc. D'aquesta manera tot el nostre lloc resideix en aquest espai de noms
+ * i no poluciona el entorn global.
+ */
+var IOC_INVADERS = function (config) {
+    var gameManager,
+        assetManager,
+        gametime,
 
-    // @abstract, a implementar en las subclases
-    this.draw = function () {
-    };
+        gameCanvas,// TODO: per acabar de definir si aquests dos valors els injectem on calgui o els deixem globals (ara es fa servir de les dues maneras)
+        gameContext,
 
-    this.clear = function () {
-        //this.context.clearRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
-    };
+        MAX_TIME_OUTSIDE_BOUNDARIES = 180,// nombre de frames fora de la pantalla avans de esborrar-lo. a 60 FPS això equival a 3s
 
-    this.move = function () {
-    };
+        updatedSprites = [],// TODO: cercar altre solució, això hauria de ser una propietar stàtica de Sprite en ES6
 
-};
+        entitiesRepository = (function () {
+            var entities = {},
 
+                addEntity = function (name, data) {
+                    // Create sprite
+                    var entity = data;
 
-// NUEVO
+                    entity.sprite = data.sprite;
 
-/** Custom Pool object. Holds Bullet objects to be managed to prevent garbage collection. */
-// TODO, a este objeto habría que pasarle por argumento el objeto a construir en lugar de incluir los generadores
-function Pool(maxSize, canvas, sprite) {
-    var size = maxSize; // Max bullets allowed in the playerBulletPool
-    var pool = [];
-    this.canvas = document.getElementById(canvas); // TODO: Esto debe pasarse como argumento del constructor
-    this.context = this.canvas.getContext("2d");
-    this.actives = size; // Por defecto suponemos que estan todos activos, cosa que es desmentida en cuanto se hace el primer recorrido
-
-
-    // TODO: Esto debe llamarse automáticamente desde el constuctor
-    this.init = function (type, bulletPool) {
-
-        if (type.lastIndexOf('bullet', 0) === 0) { // Como en el caso de enemigos engloba todos los tipos de bullets
-            for (var i = 0; i < size; i++) {
-                // Initialize the bullet object
-                // Esto es una subclase de drawable.
-
-                pool[i] = this.generateBullet(sprite, type);
-            }
-        } else if (type.lastIndexOf('enemy', 0) === 0) { // Esta comparación nos permite añadir diferentes clases de enemigos, por ejemplo enemy_a, enemy_b, etc.
-            for (var i = 0; i < size; i++) {
-                // Initialize the enemy object
-                // Esto es una subclase de drawable.
-                pool[i] = this.generateEnemy(sprite, type, bulletPool);
-            }
-        }
-    };
-
-    this.generateEnemy = function (src, type, pool) {
-        // TODO: Los enemigos deberian tener también unas coordenadas para lo que sería el cañon, que es el punto de origen
-        // de las balas
-        // Bala: punto de origen, dirección, sprite a utilizar
-
-        var enemy = new Drawable(src);
-        enemy.type = type;
-        enemy.bulletPool = pool;
-        enemy.percentFire = 1 / 500;
-        enemy.alive = false;
-        enemy.direction = 1; // Hacia abajo
-
-        enemy.canvas = this.canvas;
-        enemy.context = this.context;
-
-
-        // Sets the Enemy values
-        enemy.start = function (x, y, speed) {
-            this.x = x;
-            this.y = y;
-            this.speed = speed;
-            this.speedX = 0;
-            this.speedY = speed;
-            this.alive = true;
-
-            this.leftEdge = this.x - 30;
-            this.rightEdge = this.x + 30;
-            this.topEdge = this.y + 40;
-            this.bottomEdge = this.y - 40;
-
-        };
-
-        /**
-         * Move the enemy
-         */
-        enemy.draw = function () {
-
-            if (this.isColliding) {
-                gameManager.playerScore += 10;
-                gameManager.explosion.get();
-                return true;
-            } else if (this.x >= this.canvas.width
-                || this.x <= -this.width
-                || this.y > this.canvas.height
-                || this.y < -this.canvas.height) {
-                return true;
-            }
-            //this.context.clearRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
-
-            this.x += this.speedX;
-            this.y += this.speedY * this.direction;
-
-
-            if (this.y >= this.topEdge || this.y <= this.bottomEdge) {
-                this.speedX = -this.speed;
-                this.speedY = 0;
-                this.direction = -this.direction;
-            }
-
-            if (this.x <= this.leftEdge) {
-                this.speedX = 0;
-                this.speedY = this.speed;
-                this.leftEdge = this.x - 30;
-                //console.log("Vamos a la arriba");
-            }
-
-
-            this.context.drawImage(this.image, this.x, this.y);
-
-            // Enemy has a chance to shot every movement
-            var chance = Math.random();
-            if (chance < this.percentFire) {
-                this.fire();
-            }
-        };
-        /**
-         * Fires a bullet
-         */
-        enemy.fire = function () {
-            // TODO: Estos disparos salen de debajo de la nave y tienen que salir de su izquierda
-            this.bulletPool.get(this.x - 10, this.y + this.height / 2, -2.5);
-
-        };
-
-        enemy.clear = function () {
-            this.x = 0;
-            this.y = 0;
-            this.speed = 0;
-            this.speedX = 0;
-            this.speedY = 0;
-            this.direction = 1;
-            this.alive = false;
-            this.isColliding = false;
-        };
-
-        return enemy;
-    };
-
-
-    this.generateBullet = function (src, type) {
-        var bullet = new Drawable(src);
-        // Is true if the bullet is currently in use
-        bullet.alive = false;
-        bullet.type = type;
-
-        /** Sets the bullet values */
-        bullet.start = function (x, y, speed) {
-            this.x = x;
-            this.y = y;
-            this.speed = speed;
-            this.alive = true;  // TODO Cambiar alive por active
-        };
-
-        bullet.canvas = this.canvas;
-        bullet.context = this.context;
-
-        /**
-         * Uses a "dirty rectangle" to erase the bullet and moves it.
-         * returns true if the bullet moved off the screen, indicating that the bullet is ready to be cleared by the
-         * playerBulletPool, otherwise draws the bullet
-         */
-        bullet.draw = function () {
-            //this.context.clearRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
-            this.x += this.speed;
-
-            if (this.isColliding || (bullet.type === 'bullet_player' && this.x >= this.canvas.width + this.width)
-                || (bullet.type === 'bullet_enemy' && this.x <= -this.width)) {
-                return true;
-
-            } else {
-                this.context.drawImage(this.image, this.x, this.y);
-            }
-        };
-
-        bullet.clear = function () {
-            this.x = 0;
-            this.y = 0;
-            this.speed = 0;
-            this.alive = false;
-            this.isColliding = false;
-        };
-
-        return bullet;
-    };
-
-
-    /** Grabs the last item in the list, initializes it and pushes it to the front of the array. */
-    this.get = function (x, y, speed) {
-
-        if (!pool[size - 1].alive) {
-            pool[size - 1].start(x, y, speed);
-            pool.unshift(pool.pop());
-        }
-    };
-
-    this.animate = function () {
-        document.getElementById('score').innerHTML = gameManager.playerScore;
-
-
-        // Primero hacemos el clear
-        for (var i = 0; i < size; i++) {
-            if (pool[i].alive) {
-                pool[i].clear()
-            } else {
-                this.actives = i;
-                break;
-            }
-        }
-
-        // luego dibujamos
-        for (var i = 0; i < size; i++) {
-            // Only draw until we find a bullet that is not alive
-            if (pool[i].alive) {
-                if (pool[i].draw()) {
-                    this.disable(i);
-                    //pool[i].clear();
-                    //pool.push((pool.splice(i, 1))[0]);
-                }
-            } else {
-                break;
-            }
-        }
-    };
-
-    this.disable = function (i) {
-        pool[i].clear();
-        pool.push((pool.splice(i, 1))[0]);
-    };
-
-
-    this.detectCollisions = function (collider) {
-
-        if (collider instanceof Pool) {
-            //console.log(collider);
-            for (var i = 0; i < size; i++) {
-                if (pool[i].alive) {
-                    if (collider.detectCollisions(pool[i])) {
-                        return true;
+                    if (data.move) {
+                        entity.move = strategiesRepository.get(data.move);
                     }
 
-                } else {
-                    //console.log("No está en el pool");
-                    return false;
-                }
-            }
+                    entities[name] = entity;
+                };
 
 
-        } else {
-            for (var i = 0; i < size; i++) {
-                if (pool[i].alive) {
-                    if (this.checkCollision(collider, pool[i])) {
-
-                        collider.isColliding = true;
-                        pool[i].isColliding = true;
-                        return true;
+            return {
+                add: function (enemy) {
+                    if (Array.isArray(enemy)) {
+                        for (var i = 0; i < enemy.length; i++) {
+                            addEntity(enemy[i].name, enemy[i].data);
+                        }
+                    } else {
+                        addEntity(enemy.name, enemy.data);
                     }
 
-                } else {
-                    //console.log("No está en el pool");
-                    return false;
+                },
+
+                // Retorna un nou objecte amb les propietats originals més les mesclades
+                get: function (name, position, speed) {
+                    var entity = entities[name];
+                    if (!entity) {
+                        console.error("No se encuentra el enemigo: ", entity);
+                    }
+                    entity.position = position;
+                    entity.speed = speed;
+
+                    return entity;
+                }
+            }
+        })(),
+
+        strategiesRepository = (function () { //IIFE només exposa el mètode get, no cal constructor.
+            var strategies = {
+                movement_pattern_a: function () {
+                    // Inicialització
+                    if (!this.extra.ready) {
+                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
+                        this.extra.leftEdge = this.position.x - 10 * this.extra.speed;
+                        this.extra.rightEdge = this.position.x + 10 * this.extra.speed;
+                        this.extra.topEdge = this.position.y + 10 * this.extra.speed;
+                        this.extra.bottomEdge = this.position.y - 10 * this.extra.speed;
+                        this.extra.direction = {x: this.speed.x <= 0 ? -1 : 1, y: 1};
+                        this.extra.ready = true;
+                    }
+
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y * this.extra.direction.y;
+
+
+                    if (this.position.y > this.extra.topEdge || this.position.y < this.extra.bottomEdge) {
+                        this.speed.x = this.extra.direction.x >= 0 ? this.extra.speed : -this.extra.speed;
+                        this.speed.y = 0;
+                        this.extra.direction.y = -this.extra.direction.y;
+                    }
+
+                    if (this.position.x <= this.extra.leftEdge) {
+                        this.speed.x = 0;
+                        this.speed.y = this.extra.speed;
+                        this.extra.leftEdge = this.position.x - 10 * this.extra.speed;
+                    } else if (this.position.x >= this.extra.rightEdge) {
+                        this.speed.x = 0;
+                        this.speed.y = this.extra.speed;
+                        this.extra.rightEdge = this.position.x + 10 * this.extra.speed;
+                    }
+
+                    this.position.y = this.position.y.clamp(this.extra.bottomEdge, this.extra.topEdge);
+                },
+
+                movement_pattern_b: function () { // TODO falta solucionar como se añaden los extras
+                    // Inicialització
+
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y;
+
+                },
+
+                movement_pattern_c: function () {
+                    // Inicialització
+
+                    if (!this.extra.ready) {
+                        this.extra.age = 0;
+                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
+                        this.extra.ready = true;
+                        this.extra.vertical = this.speed.x > this.speed.y;
+                    }
+
+                    if (this.extra.direction === 1) {
+                        this.speed.x = this.extra.speed * Math.cos(-this.extra.age * Math.PI / 64);
+
+                    } else {
+                        this.speed.y = this.extra.speed * Math.sin(this.extra.age * Math.PI / 64);
+
+                    }
+
+                    this.extra.age++;
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y;
+
+                },
+
+                movement_pattern_d: function () { // TODO identic a movement_pattern_d però amb cos
+                    // Inicialització
+
+                    if (!this.extra.ready) {
+                        this.extra.age = 0;
+                        this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
+                        this.extra.ready = true;
+                        this.extra.vertical = this.speed.x > this.speed.y;
+                    }
+
+                    if (this.extra.direction === 1) {
+                        this.speed.x = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
+
+                    } else {
+                        this.speed.y = this.extra.speed * Math.cos(this.extra.age * Math.PI / 64);
+
+                    }
+
+                    this.extra.age++;
+                    this.position.x += this.speed.x;
+                    this.position.y += this.speed.y;
+
+                }
+
+            };
+
+            return {
+                get: function (strategy) {
+                    return strategies[strategy];
                 }
             }
 
+        }()),
 
-        }
-        return false;
 
-    };
+        inputController = (function () {
+            // TODO: Código para el InputController
+            // The keycodes that will be mapped when a user presses a button.
+            // Original code by Doug McInnes
+            var KEY_CODES = {
+                    32: 'space',
+                    37: 'left',
+                    38: 'up',
+                    39: 'right',
+                    40: 'down'
+                },
 
-    this.checkCollision = function (object1, object2) {
-        return (object1.x < object2.x + object2.width && object1.x + object1.width > object2.x &&
-        object1.y < object2.y + object2.height && object1.y + object1.height > object2.y);
-    };
+                // Creates the array to hold the KEY_CODES and sets all their values
+                // to false. Checking true/flase is the quickest way to check status
+                // of a key press and which one was pressed when determining
+                // when to move and which direction.
+                KEY_STATUS = {};
+            for (var code in KEY_CODES) {
+                KEY_STATUS[KEY_CODES[code]] = false;
+            }
+            /**
+             * Sets up the document to listen to onkeydown events (fired when
+             * any key on the keyboard is pressed down). When a key is pressed,
+             * it sets the appropriate direction to true to let us know which
+             * key it was.
+             */
+            document.onkeydown = function (e) {
+                // Firefox and opera use charCode instead of keyCode to
+                // return which key was pressed.
+                var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+                if (KEY_CODES[keyCode]) {
+                    e.preventDefault();
+                    KEY_STATUS[KEY_CODES[keyCode]] = true;
+                }
+            };
+            /**
+             * Sets up the document to listen to ownkeyup events (fired when
+             * any key on the keyboard is released). When a key is released,
+             * it sets teh appropriate direction to false to let us know which
+             * key it was.
+             */
+            document.onkeyup = function (e) {
+                var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+                if (KEY_CODES[keyCode]) {
+                    e.preventDefault();
+                    KEY_STATUS[KEY_CODES[keyCode]] = false;
+                }
+            };
 
-    // TODO en nuestra versión no lo necesitamos, al refactorizar puede que tampoco haga falta porqué pool será una propiedad
-    this.getPool = function () {
-        return pool;
+            return {
+                KEY_CODES: KEY_CODES,
+                KEY_STATUS: KEY_STATUS
+            }
+        })(),
+
+        poolConstructor = function (maxSize, generator, config) {
+            var that = {},
+                size = maxSize,
+                disable = function (index) {
+                    that.pool[index].clear();
+                    that.pool.push((that.pool.splice(index, 1))[0]);
+                };
+
+            that.actives = size;
+            that.pool = [];
+
+            for (var i = 0; i < size; i++) {
+                that.pool[i] = generator(config);
+            }
+
+            that.instantiate = function (type, position, speed) {
+                var instance = that.pool[size - 1].start(entitiesRepository.get(type, position, speed));
+                that.pool.unshift(that.pool.pop());
+                return instance;
+            };
+
+            that.update = function () {
+                for (var i = 0; i < size; i++) {
+                    // Només dibuixiem fins que trobem un objecte que no sigui viu
+                    if (that.pool[i].alive) {
+                        if (that.pool[i].update()) {
+                            // Si update ha retornat cert es que s'ha de desactivar
+                            disable(i);
+                        }
+                    } else {
+                        that.actives = i;
+                        break;
+                    }
+                }
+            };
+
+            that.clear = function () {
+                for (var i = 0; i < size; i++) {
+                    that.pool[i].alive = false;
+                }
+                that.actives = 0;
+            };
+
+
+            return that;
+
+        },
+
+
+        explosionConstructor = function (options) {
+            var that = {},
+                //soundPool = options.pools.sound,
+
+                // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
+                updateSprite = function () {
+                    that.sprite.position = that.position;
+                    that.sprite.update();
+                },
+
+                render = function () {
+                    that.sprite.render()
+                };
+
+
+            that.alive = false;
+
+            that.start = function (data) {
+                that.alive = true;
+                that.type = data.type;
+                that.position = data.position;
+                that.sprite = assetManager.getSprite(data.sprite);
+                that.sprite.isDone = false;
+                assetManager.getSound(data.sound);
+                //soundPool.get(that.sound) // TODO sound, s'ha de reproduir-se aqui mateix!
+                return that;
+            };
+
+            that.clear = function () {
+                that.alive = false;
+                that.type = null;
+                that.position = {x: 0, y: 0};
+                that.sprite = null;
+            };
+
+            /**
+             * TODO: Aquesta funció es practicament identica a la de spaceshipConstructor.
+             *
+             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
+             */
+            that.update = function () {
+
+
+                // Si la animació ha finalitzat aturem la explosió
+                if (that.sprite.isDone) {
+                    return true;
+                }
+                updateSprite();
+                render();
+            };
+
+
+            return that;
+
+        },
+
+        shotConstructor = function (options) {
+            var that = {},
+                errorMessage = function () {
+                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
+                };
+
+            //soundPool = options.pools.sound,
+
+            // TODO: Redundante, en spaceshipConstructor es idéntico, la excepción es que esto no tiene el método fire(); <-- gameObject podría ser un objecto con todo esto privado
+
+            that.render = function () {
+                that.sprite.render()
+            };
+
+
+            that.updateSprite = function () {
+                that.sprite.position = that.position;
+                that.sprite.update();
+            };
+
+            that.move = errorMessage;
+
+
+            that.alive = false;
+
+            that.start = function (data) {
+                that.isColliding = false;
+                that.alive = true;
+
+                that.type = data.type;
+                that.position = data.position;
+                that.sprite = assetManager.getSprite(data.sprite);
+
+                assetManager.getSound(data.sound);
+
+                //that.sprite = assetManager.getSprite(data.sprite);;
+                //soundPool.get(data.sound);// TODO sound, ha de reproduir-se aqui mateix!
+
+                that.speed = data.speed;
+
+                // Dades i Funcions especifiques de cada tipus de enemic
+                that.extra = data.extra || {};
+                that.move = data.move.bind(that);
+                that.outsideBoundariesTime = 0;
+
+                return that;
+            };
+
+            that.clear = function () {
+                that.isColliding = false;
+                that.alive = false;
+                that.outsideBoundariesTime = 0;
+
+                that.type = null;
+                that.position = {x: 0, y: 0};
+                that.sprite = null;
+
+                that.speed = {x: 0, y: 0};
+
+                // Dades i Funcions especifiques de cada tipus de enemic
+                that.extra = null;
+                that.move = errorMessage;
+
+            };
+
+            /**
+             * TODO: Aquesta funció es practicament identica a la de spaceshipConstructor.
+             *
+             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
+             */
+            that.update = function () {
+
+                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
+                if (that.isColliding) {
+                    return true;
+                }
+
+                that.updateSprite();
+
+                that.move();
+
+
+                // TODO codi repetit a spaceshipConstrutor, canviar per altre solució
+                // Si ha sortit de la pantalla durant massa temps s'elimina.
+                if (that.checkBoundaries()) {
+                    return true;
+                }
+
+                that.render();
+            };
+
+            that.checkBoundaries = function () {
+                if (this.position.x >= gameCanvas.width
+                    || this.position.x <= -this.sprite.size.width
+                    || this.position.y > gameCanvas.height
+                    || this.position.y < -this.sprite.size.height) {
+
+                    this.outsideBoundariesTime++;
+
+                } else {
+
+                    this.outsideBoundariesTime = 0;
+                }
+
+                return that.outsideBoundariesTime >= MAX_TIME_OUTSIDE_BOUNDARIES;
+            };
+
+            that.isCollidingWith = function (gameObject) {
+                return (this.position.x < gameObject.position.x + gameObject.sprite.size.width
+                && this.position.x + this.sprite.size.width > gameObject.position.x
+                && this.position.y < gameObject.position.y + gameObject.sprite.size.height
+                && this.position.y + this.sprite.size.height > gameObject.position.y);
+            };
+
+            return that;
+        },
+
+        playerConstructor = function (options) {
+            var that = spaceshipConstructor(options);
+
+            that.start(entitiesRepository.get('player', options.position, options.speed)); // TODO la posició inicial
+
+            that.shot = function (cannon) {
+                var origin;
+                console.log("està al shot", cannon.lastShot);
+                if (cannon.lastShot > cannon.fireRate) {
+                    cannon.lastShot = 0;
+                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
+                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
+                }
+            };
+
+            that.getInput = function () {
+                if (inputController.KEY_STATUS.left) {
+                    that.position.x -= that.speed.x;
+
+                } else if (inputController.KEY_STATUS.right) {
+                    that.position.x += that.speed.x;
+
+                }
+
+                if (inputController.KEY_STATUS.up) {
+                    that.position.y -= that.speed.y;
+
+                } else if (inputController.KEY_STATUS.down) {
+                    that.position.y += that.speed.y;
+                }
+
+                if (inputController.KEY_STATUS.space && !that.isColliding) {
+                    this.fire();
+                }
+
+                // Evitem que surti de la pantalla
+                this.position.x = this.position.x.clamp(0, gameCanvas.width - this.sprite.size.width);
+                this.position.y = this.position.y.clamp(0, gameCanvas.height - this.sprite.size.height);
+
+            };
+
+
+            // Sobrescrivim aquesta funció
+            that.update = function () {
+                that.updateCannon();
+
+                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
+                if (this.isColliding) {
+                    that.explosionPool.instantiate(that.explosion, that.position); // TODO canviar pel punt central del sprite
+                    return true;
+                }
+
+                this.getInput();
+                this.updateSprite();
+                this.render();
+            };
+
+            that.updateCannon = function () {
+                for (var i = 0; i < that.cannon.length; i++) {
+                    if (that.cannon[i].lastShot === undefined) {
+                        that.cannon[i].lastShot = that.cannon[i].fireRate + 1;
+                    }
+                    that.cannon[i].lastShot++;
+                }
+            };
+
+
+            return that;
+        },
+
+        spaceshipConstructor = function (options) {
+            var that = {},
+
+                errorMessage = function () {
+                    console.error("Error, aquesta funció s'ha de passar a les dades del mètode start");
+                };
+
+            that.move = errorMessage;
+
+            that.updateSprite = function () {
+                that.sprite.position = that.position;
+                that.sprite.update();
+
+            };
+
+            that.render = function () {
+                that.sprite.render()
+            };
+
+            that.bulletPool = options.pool.bullet;
+            that.explosionPool = options.pool.explosion;
+
+            that.fire = function () { // @protected
+                for (var i = 0; i < that.cannon.length; i++) {
+                    that.shot(that.cannon[i]);
+                }
+            };
+
+            that.shot = function (cannon) { // @protected
+                var origin;
+
+                if (Math.random() < cannon.fireRate / 100) {
+                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
+                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
+                }
+            };
+
+            that.alive = false;
+
+            that.start = function (data) {
+
+                that.isColliding = false;
+                that.alive = true;
+
+                that.type = data.type;
+                that.position = data.position;
+                that.sprite = assetManager.getSprite(data.sprite);
+                that.cannon = data.cannon;
+                that.explosion = data.explosion;
+
+                that.speed = data.speed;
+                that.points = data.points;
+
+                that.outsideBoundariesTime = 0;
+
+                // Dades i Funcions especifiques de cada tipus de enemic
+                that.extra = data.extra || {};
+                if (data.move) {
+                    that.move = data.move.bind(that);
+                }
+
+                return that;
+            };
+
+            that.clear = function () {
+                that.isColliding = false;
+                that.alive = false;
+
+                that.type = null;
+                that.position = {x: 0, y: 0};
+                that.sprite = null;
+
+                that.speed = {x: 0, y: 0};
+                that.points = 0;
+                that.cannon = null;
+
+                // Dades i Funcions especifiques de cada tipus de enemic
+                that.extra = null;
+                that.move = errorMessage;
+                that.outsideBoundariesTime = 0;
+
+            };
+
+            /**
+             *
+             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
+             */
+            that.update = function () {
+
+                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
+                if (that.isColliding) {
+                    that.explosionPool.instantiate(that.explosion, that.position); // TODO canviar pel punt central del sprite
+                    //that.explosionPool.instantiate('enemy_explosion', that.position); // TODO canviar pel punt central del sprite
+                    return true;
+                }
+
+
+                that.updateSprite();
+
+                that.move();
+                that.fire();
+
+                if (that.checkBoundaries()) {
+                    return true;
+                }
+
+                that.render();
+            };
+
+            that.checkBoundaries = function () {
+                if (this.position.x >= gameCanvas.width
+                    || this.position.x <= -this.sprite.size.width
+                    || this.position.y > gameCanvas.height
+                    || this.position.y < -this.sprite.size.height) {
+                    this.outsideBoundariesTime++;
+                } else {
+                    this.outsideBoundariesTime = 0;
+                }
+
+                return that.outsideBoundariesTime >= MAX_TIME_OUTSIDE_BOUNDARIES;
+            };
+
+            that.isCollidingWith = function (gameObject) {
+                return (this.position.x < gameObject.position.x + gameObject.sprite.size.width
+                && this.position.x + this.sprite.size.width > gameObject.position.x
+                && this.position.y < gameObject.position.y + gameObject.sprite.size.height
+                && this.position.y + this.sprite.size.height > gameObject.position.y);
+            };
+
+            return that;
+
+        },
+
+        backgroundConstructor = function () {
+            var that = {},
+                layers = {},
+
+                move = function (layer) {
+                    layer.position.x += layer.speed.x * that.speed.value;
+                    layer.position.y += layer.speed.y * that.speed.value;
+
+                    if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
+                        layer.position.x = 0;
+                    }
+
+                    if (layer.position.y < -layer.image.height || layer.position.y > layer.image.height) {
+                        layer.position.y = 0;
+                    }
+
+                },
+
+                render = function (layer) {
+
+                    // Imatge actual
+                    gameContext.drawImage(
+                        layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
+
+                    // Següent imatge
+                    gameContext.drawImage(
+                        layer.image, layer.position.x + layer.image.width - 1,
+                        layer.position.y, layer.image.width, layer.image.height);
+
+                };
+
+
+            that.update = function () {
+                that.speed.update();
+                for (var i = 0; i < layers.length; i++) {
+                    move(layers[i]);
+                    render(layers[i]);
+                }
+
+            };
+
+
+            that.start = function (data) {
+                layers = data.layers;
+
+                that.speed.value = data.speed.start;
+                that.speed.target = data.speed.target;
+
+                for (var i = 0; i < layers.length; i++) {
+                    layers[i].image = assetManager.getImage(layers[i].id);
+                    layers[i].position = {x: 0, y: 0}
+                }
+            };
+
+            that.speed = {
+                value: 0,
+                target: 0,
+                acceleration: 0.01,
+
+                reset: function () {
+                    that.speed.value = 0;
+                    that.speed.target = 0;
+                    that.speed.acceleration = 0.002;
+                },
+
+                update: function () {
+                    if (this.value < this.target) {
+                        this.value += this.acceleration;
+                    } else if (this.value > this.target) {
+                        this.value -= this.acceleration;
+                    }
+                }
+
+            };
+
+            that.clear = function () {
+                layers = {};
+                that.speed.reset();
+            };
+
+
+            return that;
+        },
+
+        // TODO: Els sprites han de ser reversibles, la meitat dels frames per  quan es mou a la dreta i la altre mitat per la esquerra
+        spriteConstructor = function (options) {
+            //console.log(options);
+            var that = {},
+                frameIndex = 0,
+                ticksPerFrame = options.ticksPerFrame || 0,
+                numberOfFrames = options.numberOfFrames || 1,
+                image = options.image,
+                width = image.width,
+                height = image.height,
+                loop = options.loop === undefined ? true : options.loop;
+
+            that.tickCount = 0;
+            that.lastTick = gametime;
+            that.position = options.position || {x: 0, y: 0};
+            that.size = {width: width / numberOfFrames, height: height};
+            that.isDone = false;
+
+            that.update = function () {
+
+                // TODO: Cercar una altre manera de fer-ho, això es necessari per actualitzar només 1 vegada per frame els sprites
+                if (updatedSprites.contains(that)) {
+                    return;
+                } else {
+                    updatedSprites.push(that);
+                }
+
+                that.tickCount++;
+                that.lastTick = gametime;
+
+                if (that.tickCount > ticksPerFrame) {
+                    that.tickCount = 0;
+
+                    if (frameIndex < numberOfFrames - 1) {
+                        frameIndex += 1;
+                    } else {
+                        that.isDone = !loop;
+                        frameIndex = 0;
+                    }
+                }
+            };
+
+            // TODO: En aquest projecte no el fem servir perqué només tenim un canvas i es redibuixa completament
+
+            that.render = function () {
+
+                if (that.isDone) {
+                    return;
+                }
+
+                gameContext.drawImage(
+                    image,
+                    frameIndex * width / numberOfFrames,
+                    0,
+                    width / numberOfFrames,
+                    height,
+                    that.position.x,
+                    that.position.y,
+                    width / numberOfFrames,
+                    height);
+
+            };
+
+
+            return that;
+        },
+
+        // TODO s'ha de fer un pool de sprites i que es retorni el primer lliure, per evitar els problemas de que tots els sprites van amb el mateix frame
+        assetManagerConstructor = function (progressCallback) {
+            var that = {},
+                successCount = 0,
+                errorCount = 0,
+                downloadQueue = [],// TODO convertir en un unic objecte que contingui totes les cues
+                spritesQueue = [],
+                soundsQueue = [],
+                musicQueue = [],
+                cache = {
+                    images: {},
+                    sprites: {},
+                    sounds: {},
+                    music: {}
+                },
+                intervals = {},
+                currentSong;
+
+            updateProgress = function () {
+                if (progressCallback) {
+                    progressCallback(successCount + errorCount, downloadQueue.length);
+                }
+            };
+
+
+            that.queueDownload = function (asset) {
+                downloadQueue.push(asset);
+            };
+
+            that.queueSprites = function (asset) {
+                spritesQueue.push(asset);
+            };
+
+            that.queueSounds = function (asset) {
+                soundsQueue.push(asset);
+            };
+
+            that.queueMusic = function (asset) {
+                musicQueue.push(asset);
+            };
+
+
+            that.downloadAll = function (callback, args) {
+                var i, j, pool, poolSize, sound;
+
+                if (downloadQueue.length === 0) {
+                    callback();
+                }
+
+
+                // Primer descarreguem les imatges
+                for (i = 0; i < downloadQueue.length; i++) {
+                    var path = downloadQueue[i].path,
+                        id = downloadQueue[i].id,
+                        img = new Image();
+
+                    img.addEventListener("load", function () {
+                        successCount += 1;
+                        updateProgress();
+                        if (that.isDone()) {
+                            generateSprites();
+                            callback(args);
+                        }
+                    }, false);
+                    img.addEventListener("error", function () {
+                        errorCount += 1;
+                        updateProgress();
+                        if (that.isDone()) {
+                            generateSprites();
+                            callback(args);
+                        }
+                    }, false);
+                    img.src = path;
+                    cache.images[id] = img;
+                }
+
+                generateSounds();
+                generateMusic();
+
+            };
+
+            var generateSprites = function () {
+                var pool;
+
+                for (var i = 0; i < spritesQueue.length; i++) {
+
+                    pool = [];
+
+                    var poolSize = 10;
+
+                    for (var j = 0; j < poolSize; j++) {
+                        pool.push(spriteConstructor({
+                                image: that.getImage(spritesQueue[i].id),
+                                numberOfFrames: spritesQueue[i].numberOfFrames,
+                                ticksPerFrame: spritesQueue[i].ticksPerFrame,
+                                loop: spritesQueue[i].loop === undefined ? true : spritesQueue[i].loop
+                            }
+                        ));
+                    }
+
+                    cache.sprites[spritesQueue[i].id] = pool;
+                }
+
+            };
+
+            var generateSounds = function () {
+                var pool, poolSize, sound;
+                for (var i = 0; i < soundsQueue.length; i++) {
+                    pool = [];
+                    poolSize = 10; // TODO nombre màxim de sons identics que es reprodueixen al mateix temps
+                    for (var j = 0; j < poolSize; j++) {
+                        //Initialize the sound
+                        sound = new Audio(soundsQueue[i].path);
+                        sound.volume = soundsQueue[i].volume;
+                        sound.load(); // TODO això es necessari pels navegadorsm és antics, si funciona amb FF i Chrome ho esborremt
+                        pool.push(sound);
+                    }
+                    cache.sounds[soundsQueue[i].id] = {
+                        currentSound: 0,
+                        pool: pool,
+                        volume: soundsQueue[i].volume,
+                    }
+
+                }
+            };
+
+            that.isDone = function () {
+                return (downloadQueue.length == successCount + errorCount);
+            };
+
+            that.getImage = function (id) {
+                return cache.images[id];
+            };
+
+
+            that.getSprite = function (id) {
+                var pool = cache.sprites[id];
+                var sprite = pool[pool.length - 1];
+                pool.unshift(pool.pop());
+                return sprite;
+            };
+
+            that.getSound = function (id) {
+                var sounds = cache.sounds[id];
+
+                if (sounds.pool[sounds.currentSound].currentTime === 0
+                    || sounds.pool[sounds.currentSound].ended) {
+                    sounds.pool[sounds.currentSound].play();
+                }
+                sounds.currentSound = (sounds.currentSound + 1) % sounds.pool.length;
+            };
+
+            that.fadeOutAudio = function (timer) {
+                that.clearIntervals();
+                if (timer) {
+                    intervals.fadeOutAudio = setTimeout(fadeOutAudio, timer);
+                } else {
+                    fadeOutAudio();
+                }
+
+            };
+
+            var fadeOutAudio = function () {
+                for (var id in cache.sounds) {
+                    for (var i = 0; i < cache.sounds[id].pool.length; i++) {
+                        sound = cache.sounds[id].pool[i];
+                        sound.volume = 0;
+                    }
+                }
+            };
+
+            that.fadeInAudio = function () {
+                that.clearIntervals();
+
+                for (var id in cache.sounds) {
+                    for (var i = 0; i < cache.sounds[id].pool.length; i++) {
+                        sound = cache.sounds[id].pool[i];
+                        sound.volume = cache.sounds[id].volume;
+                    }
+                }
+            };
+
+            that.clearIntervals = function () {
+                clearInterval(intervals.fadeInAudio);
+                clearInterval(intervals.fadeOutAudio);
+            };
+
+            that.queueMusic = function (asset) {
+                musicQueue.push(asset);
+            };
+
+            var generateMusic = function () {
+                for (var i = 0; i < musicQueue.length; i++) {
+                    sound = new Audio(musicQueue[i].path);
+                    sound.volume = musicQueue[i].volume;
+                    sound.loop = musicQueue[i].loop;
+                    sound.load(); // TODO això es necessari pels navegadorsm és antics, si funciona amb FF i Chrome ho esborremt
+
+                    console.log("loop?", musicQueue[i].loop);
+                    cache.music[musicQueue[i].id] = sound;
+                }
+            };
+
+            that.getMusic = function (id) {
+                that.resetMusic(currentSong);
+                cache.music[id].play();
+                currentSong = id;
+            };
+
+            that.resetMusic = function (id) {
+                if (!id) {
+                    return;
+                }
+
+                if (!cache.music[id].ended) {
+                    cache.music[id].pause();
+                }
+
+                if (cache.music[id].currentTime > 0) {
+                    cache.music[id].currentTime = 0;
+                }
+
+
+            };
+
+            return that;
+        },
+
+
+        gameManagerConstructor = function () {
+            var that = {},
+                levels = {},
+                currentLevel,
+                levelEnded,
+                score,
+                distance, // Relativa al nivell actual
+                nextWave, // Relativa al nivell actual
+
+                enemyPool,
+                enemyShotPool,
+                playerShotPool,
+                explosionPool,
+
+                background,
+
+                player,
+
+                state,// "GameOver", "LoadingNextLevel", "Runnin" TODO: substituir per un enum
+
+
+                initEnvironment = function (data) { // TODO: Esta puede ser privada, o ser sustituida por init
+                    gameCanvas = document.getElementById(data.canvas.game);
+                    gameContext = gameCanvas.getContext("2d");
+
+
+                    explosionPool = poolConstructor(100, explosionConstructor/*, {pool: {sound: soundPool}}*/);
+
+
+                    enemyShotPool = poolConstructor(500, shotConstructor);
+                    enemyPool = poolConstructor(100, spaceshipConstructor, {
+                        pool: {
+                            bullet: enemyShotPool,
+                            explosion: explosionPool
+                        }
+                    });
+
+                    playerShotPool = poolConstructor(100, shotConstructor/*, {pool: {sound: soundPool}}*/);
+
+                    //soundPool =  poolConstructor(100, explosionConstructor);
+
+                    that.loadAssets(data.assets);
+
+                },
+
+                ui = (function () {
+                    var scoreText = document.getElementById('score'),
+                        distanceText = document.getElementById('distance'),
+                        messageText = document.getElementById('messages');
+
+                    return {
+                        update: function () {
+                            scoreText.innerHTML = score;
+                            distanceText.innerHTML = distance;
+                        },
+                        showMessage: function (message, time) { // Temps en milisegons
+                            messageText.innerHTML = message;
+                            messageText.style.opacity = 1;
+
+                            setTimeout(function () {
+                                messageText.style.opacity = 0;
+                            }, time);
+                        },
+
+                        hideMessage: function () {
+                            messageText.style.opacity = 0;
+                        },
+
+                        showGameOver: function () {
+                            document.getElementById('game-over').style.display = "block";
+                        },
+
+                        hideGameOver: function () {
+                            document.getElementById('game-over').style.display = "none";
+                        },
+
+                        transitionScreen: function (callback) {
+                            gameCanvas.style.opacity = 0;
+
+                            setTimeout(function () {
+                                gameCanvas.style.opacity = 1;
+                                callback();
+                            }, 3000); // la transicion durea 3s
+                        },
+
+                        fadeIn: function () {
+                            gameCanvas.style.opacity = 1;
+                        },
+
+                        fadeOut: function () {
+                            gameCanvas.style.opacity = 0;
+                        }
+
+
+                    };
+                })();
+
+
+            that.init = function () {
+                // Iniciem el joc indicant la url des de on es descarregaran les dades del joc.
+
+                that.loadData(config.asset_data_url, initEnvironment);
+
+            };
+
+
+            that.loadData = function (url, callback) {
+                var httpRequest;
+
+                if (window.XMLHttpRequest) {// codi per IE7+, Firefox, Chrome, Opera, Safari
+                    httpRequest = new XMLHttpRequest();
+                } else { // codi for IE6, IE5
+                    httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+                }
+
+                httpRequest.open("GET", url, true);
+                httpRequest.send(null);
+
+                httpRequest.onreadystatechange = function () {
+                    if (httpRequest.readyState === 4 && httpRequest.status === 200) {
+                        // Hem rebut la resposta correctament
+                        var data = JSON.parse(httpRequest.responseText);
+                        callback(data);
+                    } else if (httpRequest.readyState === 4) {
+                        console.error("Error al carregar les dades del joc");
+                    }
+                };
+            };
+
+            that.loadAssets = function (assets) {
+                var i;
+                // Descarreguem les imatges i generem els sprites
+                for (i = 0; i < assets.images.length; i++) {
+                    assetManager.queueDownload(assets.images[i]);
+                }
+                for (i = 0; i < assets.sprites.length; i++) {
+                    assetManager.queueSprites(assets.sprites[i]);
+                }
+
+                for (i = 0; i < assets.sounds.length; i++) {
+                    assetManager.queueSounds(assets.sounds[i]);
+                }
+
+                for (i = 0; i < assets.music.length; i++) {
+                    assetManager.queueMusic(assets.music[i]);
+                }
+
+                assetManager.downloadAll(that.loadEnemiesData);
+
+            };
+
+
+            that.loadEnemiesData = function () {
+                that.loadData(config.entity_data_url, function (data) {
+
+                    entitiesRepository.add(data);
+                    that.loadLevelsData();
+                })
+            };
+
+            that.loadLevelsData = function () {
+                that.loadData(config.levels_data_url, function (data) {
+                    levels = data.levels;
+                    that.start();
+                });
+            };
+
+
+            that.start = function () {
+
+                background = backgroundConstructor({
+                    context: gameContext
+                });
+
+                that.restart();
+                gameLoop(); // TODO esto debe ser update()
+
+            };
+
+            that.startLevel = function (level) {
+                // TODO mostrar missatge de benvinguda
+
+                var message = levels[level].name
+                    + "<p><span>"
+                    + levels[level].description
+                    + "</span></p>";
+                ui.showMessage(message, 3000);
+
+                background.start(levels[level].background);
+                assetManager.getMusic(levels[currentLevel].music);
+
+                levelEnded = false;
+                nextWave = 0;
+                distance = 0;
+
+                player.position = {x: 10, y: 256};
+            };
+
+
+            function gameLoop() { // TODO: eliminar després de les proves o canviar el nom a update <-- altre opció es fer que desde el gameLoop es cridint els diferents mètodes: Update(), DetectCollisions(), etc.
+                window.requestAnimationFrame(gameLoop);
+
+                //gametime = Date.now();
+                updatedSprites = [];
+
+
+                spawner();
+
+
+                detectCollisions();
+
+                background.update();
+                enemyPool.update();
+
+
+                enemyShotPool.update();
+                playerShotPool.update();
+
+
+                if (player.isColliding && state != "GameOver") {
+                    setGameOver();
+                } else if (enemyPool.actives === 0 && levelEnded && state != "GameOver" && state != "LoadingNextLevel") {
+                    ui.transitionScreen(setEndLevel)
+                    state = "LoadingNextLevel";
+                } else if (state != "GameOver") {
+                    player.update();
+                    distance++;
+                }
+
+                explosionPool.update();
+
+                ui.update();
+
+
+            }
+
+            function detectCollisions() {
+                var impactInfo,
+                    i;
+
+
+                // bala del jugador amb enemic
+                impactInfo = detectCollisionsPoolWithPool(playerShotPool, enemyPool);
+
+                // TODO: en lloc de fer la destrucció automàtica afegir els mètodes per danyar al enemic
+                if (impactInfo.length > 0) {
+                    for (i = 0; i < impactInfo.length; i++) {
+                        impactInfo[i].source.isColliding = true; // TODO: canviar el nom a isDestroyed
+                        impactInfo[i].target.isColliding = true; // TODO: canviar el nom a isDestroyed
+                        score += impactInfo[i].target.points;
+                        //console.log("points", impactInfo[i].target.points);
+                    }
+
+                }
+
+                // bala del enemic amb jugador
+                impactInfo = detectCollisionsPoolWithGameObject(enemyShotPool, player);
+
+                // TODO: en lloc de fer la destrucció automàtica afegir els mètodes per danyar al enemic
+                if (impactInfo.length > 0) {
+                    for (i = 0; i < impactInfo.length; i++) {
+                        impactInfo[i].source.isColliding = true; // TODO: canviar el nom a isDestroyed
+                        impactInfo[i].target.isColliding = true; // TODO: canviar el nom a isDestroyed
+
+                    }
+
+                }
+
+                // enemic amb jugador
+                impactInfo = detectCollisionsPoolWithGameObject(enemyPool, player);
+                if (impactInfo.length > 0) {
+                    for (i = 0; i < impactInfo.length; i++) {
+                        impactInfo[i].source.isColliding = true; // TODO: canviar el nom a isDestroyed
+                        impactInfo[i].target.isColliding = true; // TODO: canviar el nom a isDestroyed
+                    }
+                }
+
+
+            }
+
+            function detectCollisionsPoolWithPool(poolA, poolB) {
+                var i = 0,
+                    j = 0,
+                    impacts = [];
+
+                while (poolA.pool[i] && poolA.pool[i].alive) {
+                    while (poolB.pool[j] && poolB.pool[j].alive) {
+                        if (poolA.pool[i].isCollidingWith(poolB.pool[j])) {
+                            impacts.push({
+                                source: poolA.pool[i],
+                                target: poolB.pool[j]
+                            });
+                        }
+                        j++;
+                    }
+                    j = 0;
+                    i++;
+                }
+
+                return impacts;
+            }
+
+            function detectCollisionsPoolWithGameObject(pool, gameObject) {
+                var i = 0,
+                    impacts = [];
+
+                while (pool.pool[i] && pool.pool[i].alive) {
+                    if (pool.pool[i].isCollidingWith(gameObject)) {
+                        impacts.push({
+                            source: pool.pool[i],
+                            target: gameObject
+                        });
+                    }
+                    i++;
+                }
+
+                return impacts;
+            }
+
+
+            // TODO: Crear un objecte privat distance que s'encarregui de cridar aquest mètodes amb un update() i dedicar
+            // el spwaner realment a spawnejar enemics
+            function spawner() {
+                var waves = levels[currentLevel].waves,
+                    currentWave;
+
+                if (nextWave < waves.length && distance >= waves[nextWave].distance) {
+                    currentWave = waves[nextWave];
+
+                    for (var i = 0; i < currentWave.spawns.length; i++) {
+                        if (!currentWave.spawns[i].formation) { // Si no te formació es tracta d'un enemic unic
+                            spawnEnemy(currentWave.spawns[i]);
+                        } else {
+                            spawnFormation(currentWave.spawns[i]);
+                        }
+                    }
+
+                    nextWave++;
+                }
+
+                if (distance > levels[currentLevel].end) {
+                    levelEnded = true;
+                }
+            }
+
+            function spawnEnemy(enemy) {
+                enemyPool.instantiate(enemy.type, enemy.position, enemy.speed);
+            }
+
+            function spawnFormation(wave) {
+                var i, j,
+                    originPosition,
+                    spacer,
+                    nextColumn,
+                    currentPosition,
+                    side;
+
+                switch (wave.formation.type) {
+                    case "columns":
+
+                        // TODO aquestes variables s'han de poder eliminar en la seva major part. COMPTE: s'ha de crear una nova posició per cada objecte que instanciem o es canvien totes a l'hora.
+                        originPosition = {x: wave.position.x, y: wave.position.y};
+                        spacer = wave.formation.spacer;
+                        nextColumn = originPosition.y + wave.formation.column_height;
+                        currentPosition = {x: wave.position.x, y: wave.position.y};
+
+
+                        for (i = 0; i < wave.formation.amount; i++) {
+
+                            enemyPool.instantiate(wave.type, {
+                                x: currentPosition.x,
+                                y: currentPosition.y
+                            }, wave.speed);
+
+
+                            currentPosition.y += spacer;
+
+                            if (currentPosition.y >= nextColumn) {
+
+                                currentPosition.x += spacer;
+                                currentPosition.y = originPosition.y;
+                            }
+
+                        }
+
+                        break;
+
+                    case "grid":
+                        originPosition = {x: wave.position.x, y: wave.position.y};
+                        spacer = wave.formation.spacer;
+                        side = Math.round(Math.sqrt(wave.formation.amount));
+
+                        for (i = 0; i < side; i++) {
+                            for (j = 0; j < side; j++) {
+                                enemyPool.instantiate(wave.type, {
+                                    x: originPosition.x + (spacer * i),
+                                    y: originPosition.y + (spacer * j)
+                                }, wave.speed);
+
+                            }
+                        }
+
+
+                        break;
+
+                    case "row":
+                        originPosition = {x: wave.position.x, y: wave.position.y};
+                        spacer = wave.formation.spacer;
+
+                        for (i = 0; i < wave.formation.amount; i++) {
+                            enemyPool.instantiate(wave.type, {
+                                x: originPosition.x + (spacer * i),
+                                y: originPosition.y
+                            }, wave.speed);
+                        }
+                        break;
+
+                    case "column":
+                        originPosition = {x: wave.position.x, y: wave.position.y};
+                        spacer = wave.formation.spacer;
+
+                        for (i = 0; i < wave.formation.amount; i++) {
+                            enemyPool.instantiate(wave.type, {
+                                x: originPosition.x,
+                                y: originPosition.y + (spacer * i)
+                            }, wave.speed);
+                        }
+                        break;
+
+
+                    default:
+                        console.log("Error, no es reconeix el tipus de formació")
+                }
+
+            }
+
+            function setEndLevel() {
+                //that.clearScreen();
+
+                currentLevel++;
+
+                if (currentLevel >= levels.length) {
+                    //console.log("Enhorabona, has completat tots els nivells, tornem a començar!")
+                    currentLevel = 0;
+                }
+
+                enemyPool.clear();
+                explosionPool.clear();
+                enemyShotPool.clear();
+                playerShotPool.clear();
+
+                that.startLevel(currentLevel); // TODO com que ja som dins del loop del joc no cal tornar a cridar-lo
+                state = "Running";
+            }
+
+
+            function setGameOver() {
+                player.update(); // TODO Un últim update per activar la explosió
+                state = "GameOver";
+
+                //this.backgroundAudio.pause();
+                //this.gameOverAudio.currentTime = 0; // No hace falta porqué no es un loop
+                //this.gameOverAudio.play();
+                ui.hideMessage();
+                ui.showGameOver();
+                ui.fadeOut();
+                assetManager.fadeOutAudio(2000); // Donem temps per que es produeixi la explosió
+                setTimeout(function () {
+                    assetManager.getMusic("game-over");
+                }, 2000);
+
+            };
+
+            that.restart = function () {
+
+                //this.gameOverAudio.pause();
+                ui.hideGameOver();
+                assetManager.fadeInAudio();
+
+                player = playerConstructor(
+                    {
+                        pool: {
+                            bullet: playerShotPool,
+                            explosion: explosionPool
+                        },
+                        position: {x: 10, y: 256},
+                        speed: {x: 4, y: 4}
+                    });
+
+                currentLevel = 0;
+                score = 0;
+                state = "Running"
+
+                //that.startLevel(currentLevel);
+
+                enemyPool.clear();
+                explosionPool.clear();
+                enemyShotPool.clear();
+                playerShotPool.clear();
+
+                assetManager.resetMusic(levels[currentLevel].music);
+
+                //this.backgroundAudio.currentTime = 0;
+                ui.fadeIn();
+                that.startLevel(currentLevel);
+
+                //this.start();
+            };
+
+            /**
+             * Aquesta funció esborra tot el canvas. Com que el nostre joc fa servir imatges a pantalla completa no
+             * caldra al gameLoop però es pot fer servir per altres pantalles
+             */
+            that.clearScreen = function () {
+                gameContext.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+            };
+
+            return that;
+        },
+
+
+        /**
+         * Crea les instancias dels gestors i controladors i inicia el joc.
+         */
+        init = function () {
+            // Creem les instancies dels gestors i controlladors
+            gameManager = gameManagerConstructor();
+            assetManager = assetManagerConstructor(function (current, total) {
+                //console.log("Downloaded asset: " + current + "/" + total);
+            });
+
+            // Iniciem el joc
+            gameManager.init();
+        },
+
+        restart = function () {
+            gameManager.restart();
+        };
+
+
+// Aquest son els mètodes de IOC_INVADERS que son accesibles desde el espai global
+    return {
+        start: init,
+
+        restart: restart
     }
-}
-
-// Clase para el jugador
-/** Create the Ship object that the player controls. The ship is drawn on the "ship" canvas and uses dirty rectangles
- * to move around the Screen.
- * Subclase de Drawable
- * */
-var generateShip = function (src, canvas, pool) {
-
-    var ship = new Drawable(src);
-    ship.canvas = document.getElementById(canvas); // TODO: Esto debe pasarse como argumento del constructor
-    ship.context = ship.canvas.getContext("2d");
-
-    ship.speed = 3;
-
-    ship.bulletPool = pool;
-    ship.bulletPool.init('bullet_player'); // TODO esto debe llamarse desde el constructor
-    ship.fireRate = 15;
-    ship.counter = 0;
-    ship.draw = function () {
-        ship.context.drawImage(this.image, this.x, this.y);
-
-    };
-
-
-    // TODO Toda la funcionalidad de moverse y disparar debe ejectuarse desde el motor de juego y no el drawable
-    ship.move = function () {
-        ship.counter++;
-
-        // Determine if the action is move action
-        if (KEY_STATUS.left || KEY_STATUS.right || KEY_STATUS.down || KEY_STATUS.up) {
-            // The ship moved, so erase it's current image os ti can be redraw in it's new position.
-
-            //ship.context.clearRect(ship.x - 1, ship.y - 1, ship.width + 2, ship.height + 2);
-
-            if (KEY_STATUS.left) {
-                ship.x -= ship.speed;
-
-            } else if (KEY_STATUS.right) {
-                ship.x += ship.speed;
-
-            }
-
-            if (KEY_STATUS.up) {
-                ship.y -= ship.speed;
-
-            } else if (KEY_STATUS.down) {
-                ship.y += ship.speed;
-            }
-
-        }
-
-        if (KEY_STATUS.space && ship.counter >= ship.fireRate && !this.isColliding) {
-            ship.fire();
-            ship.counter = 0;
-        }
-
-
-        // TODO ajustar el this.x y this.y añadiendo el método clamp() a Number.prototype
-        ship.x = ship.x.clamp(0, this.canvas.width - this.width);
-        ship.y = ship.y.clamp(0, this.canvas.height - this.height);
-
-        // Finish redrawing the ship
-        if (!this.isColliding) {
-            ship.draw();
-        }
-
-    };
-
-    ship.fire = function () {
-        this.bulletPool.get(this.x + 16, this.y + 5, 10, 'bullet_player');
-        gameManager.laser.get();
-    };
-    return ship;
-
 };
 
-// TODO: Código para el InputController
-// The keycodes that will be mapped when a user presses a button.
-// Original code by Doug McInnes
-KEY_CODES = {
-    32: 'space',
-    37: 'left',
-    38: 'up',
-    39: 'right',
-    40: 'down',
-}
 
-// Creates the array to hold the KEY_CODES and sets all their values
-// to false. Checking true/flase is the quickest way to check status
-// of a key press and which one was pressed when determining
-// when to move and which direction.
-KEY_STATUS = {};
-for (var code in KEY_CODES) {
-    KEY_STATUS[KEY_CODES[code]] = false;
-}
-/**
- * Sets up the document to listen to onkeydown events (fired when
- * any key on the keyboard is pressed down). When a key is pressed,
- * it sets the appropriate direction to true to let us know which
- * key it was.
- */
-document.onkeydown = function (e) {
-    // Firefox and opera use charCode instead of keyCode to
-    // return which key was pressed.
-    var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
-    if (KEY_CODES[keyCode]) {
-        e.preventDefault();
-        KEY_STATUS[KEY_CODES[keyCode]] = true;
-    }
-}
-/**
- * Sets up the document to listen to ownkeyup events (fired when
- * any key on the keyboard is released). When a key is released,
- * it sets teh appropriate direction to false to let us know which
- * key it was.
- */
-document.onkeyup = function (e) {
-    var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
-    if (KEY_CODES[keyCode]) {
-        e.preventDefault();
-        KEY_STATUS[KEY_CODES[keyCode]] = false;
-    }
-}
-
-
-// Configuración del juego
-//var gameConfig = {
-//    canvas: {
-//        background: "background",
-//        main: "main",
-//        player: "ship"
-//    },
-//    layers: [
-//        "assets/images/layer1.png",
-//        "assets/images/layer2.png",
-//        "assets/images/layer3.png",
-//        "assets/images/layer4.png"],
-//    poolSize: {
-//        bullets_player: 30,
-//        bullets_enemies: 50,
-//        enemies: 30
-//    },
-//    sprites: {
-//        spaceship: "assets/images/spaceship.png",
-//        bullet_player: "assets/images/blast.png",
-//        bullet_enemy: "assets/images/enemy_blast.png",
-//        enemy: "assets/images/alien_a.png"
-//    }
-//
-//};
-
-var GameManager = function (config) {
-    // TODO: Separar la inicialización?
-    //this.parallaxManager = new ParallaxManager(config.canvas.background, config.layers);
-    //this.playerBulletPool = new Pool(config.poolSize.bullets_player, config.canvas.main, config.sprites.bullet_player);
-    //this.ship = generateShip(config.sprites.spaceship, config.canvas.player, this.playerBulletPool);
-
-
-
-    // Inicialización del juego, aquí se pueden añadir otros valores como el número de vidas inicial, reinicialización de las posiciones, vaciado de los pools de enemigos y balas, etc.
-    this.start = function () {
-
-
-        this.parallaxManager = new ParallaxManager(config.canvas.background, config.layers);
-        this.playerBulletPool = new Pool(config.poolSize.bullets_player, config.canvas.main, config.sprites.bullet_player);
-        this.ship = generateShip(config.sprites.spaceship, config.canvas.player, this.playerBulletPool);
-
-
-        this.playerScore = 0;
-        this.currentWave = 1;
-
-
-        // Posición inicial de la nave
-        this.ship.x = this.ship.width / 2;
-        this.ship.y = (this.ship.canvas.height - this.ship.height) / 2;
-
-        // Initialize the enemy enemy pools
-
-        this.enemyBulletPool = new Pool(config.poolSize.bullets_enemies, config.canvas.main, config.sprites.bullet_enemy);
-        this.enemyBulletPool.init('bullet_enemy');
-
-
-        this.enemyPool = new Pool(config.poolSize.enemies, config.canvas.main, config.sprites.enemy);
-        this.enemyPool.init('enemy', this.enemyBulletPool);
-        // Oleada inicial
-        this.spawnWave(this.currentWave);
-
-
-        // TODO: Las dimensiones hay que obtenerlas del sprite. Como esto es solo para organizar la formación podemos
-        // usar otro método, por ejemplo calculando según el tamaño del canvas
-
-
-        // Audio files
-        this.laser = new SoundPool(10);
-        this.laser.init("laser");
-        this.explosion = new SoundPool(20);
-        this.explosion.init("explosion");
-        this.backgroundAudio = new Audio("assets/sounds/POL-rocketman-short.mp3");
-        this.backgroundAudio.loop = true;
-        this.backgroundAudio.volume = .25;
-        this.backgroundAudio.load(); // TODO esto parece que es solo para navegadores más antiguos
-        this.gameOverAudio = new Audio("assets/sounds/game-over.mp3");
-        this.gameOverAudio.loop = false;
-        this.gameOverAudio.volume = .25;
-        this.gameOverAudio.load();
-
-        //this.checkAudio = window.setInterval(function() {checkReadyState()}, 1000);
-
-
-
-
-        // Iniciamos la música
-        this.backgroundAudio.play();
-
-        this.update();
-        this.ship.draw();
-    };
-
-    /**
-     * Ensure the game sound has loaded before starting the game
-     * TODO: Al igual que la carga de imagenes seguramente para estos ejemplos no hace falta ya que se ejecutan en local
-     */
-    //function checkReadyState() {
-    //    if (gameManager.gameOverAudio.readyState === 4 && gameManager.backgroundAudio.readyState ===4) {
-    //        window.clearInterval(game.checkAudio);
-    //        gameManager.start();
-    //    }
-    //}
-
-    this.spawning = false;
-
-    // Wave corresponde al número de la oleada
-    this.spawnWave = function (wave) {
-
-        this.spawning = true;
-        console.log("Wave " + wave);
-
-
-        var height = this.ship.canvas.height - 30;
-        var width = this.ship.canvas.width - 50;
-        var maxPerCol = Math.min(wave, 6);
-        var x = width - 30, y = 0;
-        var spacer = 50;
-
-        for (var i = 1; i <= wave; i++) {
-            y += height / (maxPerCol + 1 );
-            this.enemyPool.get(x, y, 1);
-
-
-            if (i % maxPerCol === 0) {
-                x -= spacer;
-                y = 0;
-            }
-
-        }
-        this.enemyBulletPool.actives = wave;
-
-        this.spawning = false;
-    };
-
-    // Llamada a draw a todos los componentes
-    // Game Loop
-    this.update = function () {
-
-
-
-        this.detectCollisions();
-
-
-        // Si la última wave está muerta creamos una nueva TODO buscar otro lugar más apropiado, donde se incremente la puntuación por ejemplo
-        if (this.enemyPool.actives === 0 && !this.spawning) {
-            this.spawnWave(++this.currentWave);
-        }
-
-        // Animate game objects
-
-        if (!gameManager.ship.isColliding) { // TODO lo que habría que hacer si está colisionando es quitar una vida y después comprobar si es game over
-            requestAnimationFrame(function () {
-                this.update();
-            }.bind(this));
-
-            // TODO primero habría que hacer todos los clears de los objetos del pool y después el draw para evitar que se borren los trozos de bala debajo de las naves
-
-            this.parallaxManager.draw();
-            this.ship.move();
-            this.playerBulletPool.animate();
-
-            this.enemyBulletPool.animate();
-
-
-            this.enemyPool.animate();
-
-        } else {
-            this.gameOver();
-        }
-
-
-
-    };
-
-    this.detectCollisions = function () {
-
-        // Comprobamos si albuna bala del jugador ha impactado al enemigo
-        this.playerBulletPool.detectCollisions(this.enemyPool);
-
-        // Comprobamos si alguna bala enemiga ha impactado al jugador
-        this.enemyBulletPool.detectCollisions(this.ship);
-
-        // Comprobamos si algún enemigo ha impactado al jugador
-        this.enemyPool.detectCollisions(this.ship);
-
-    };
-
-
-    this.gameOver = function() {
-        this.backgroundAudio.pause();
-        //this.gameOverAudio.currentTime = 0; // No hace falta porqué no es un loop
-        this.gameOverAudio.play();
-        document.getElementById('game-over').style.display = "block";
-
-
-    };
-
-    this.restart = function() {
-
-        this.gameOverAudio.pause();
-        document.getElementById('game-over').style.display = "none";
-
-        var shipCanvas = document.getElementById(config.canvas.player); // TODO: Esto debe pasarse como argumento del constructor
-        var shipContext = shipCanvas.getContext("2d");
-
-        var bgCanvas = document.getElementById(config.canvas.background); // TODO: Esto debe pasarse como argumento del constructor
-        var bgContext = bgCanvas.getContext("2d");
-
-        var mainCanvas = document.getElementById(config.canvas.main); // TODO: Esto debe pasarse como argumento del constructor
-        var mainContext = mainCanvas.getContext("2d");
-
-
-        this.backgroundAudio.currentTime = 0;
-        this.start();
-    }
-};
-
-
-function SoundPool(maxSize) {
-    var size = maxSize;
-    var pool = [];
-    this.pool = pool;
-    var currSound = 0;
-
-    /*
-     * Populates the pool array with the given sound
-     */
-
-    this.init = function (object) {
-        if (object == "laser") {
-            for (var i = 0; i < size; i++) {
-                // Initialize the sound
-                var laser = new Audio("assets/sounds/shoot.mp3");
-                laser.volume = .12;
-                laser.load(); // TODO esto parece que es solo para navegadores más antiguos
-                pool[i] = laser;
-
-            }
-        } else if (object == "explosion") {
-            for (var i = 0; i < size; i++) {
-                var explosion = new Audio("assets/sounds/explosion.mp3");
-                explosion.volume = .25;
-                explosion.load();// TODO esto parece que es solo para navegadores más antiguos
-                pool[i] = explosion;
-            }
-        }
-    };
-
-    /* Plays a sound */
-    this.get = function () {
-        if (pool[currSound].currentTime == 0 || pool[currSound].ended) {
-            pool[currSound].play();
-        }
-        currSound = (currSound + 1) % size;
-    }
-}
-
-
-
-// Aquí se inicia el juego. TODO: pasar la ruta de configuración al constructor y que la carga se haga desde ahí
-
-var gameManager;
-
-(function() {
-    var httpRequest;
-
-    if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
-        httpRequest=new XMLHttpRequest();
-    }
-
-    else{ // code for IE6, IE5
-        httpRequest=new ActiveXObject("Microsoft.XMLHTTP");
-    }
-
-    httpRequest.open("GET","game-config.json",true);
-    httpRequest.send(null);
-
-    httpRequest.onreadystatechange = function() {
-        if (httpRequest.readyState === 4) {
-        // everything is good, the response is received
-            if (httpRequest.status === 200) {
-                // perfect!
-
-                var config = JSON.parse(httpRequest.responseText);
-                gameManager = new GameManager(config);
-                gameManager.start();
-            } else {
-                console.error("Error al cargar la configuración del juego");
-                // there was a problem with the request,
-                // for example the response may contain a 404 (Not Found)
-                // or 500 (Internal Server Error) response code
-            }
-
-        } else {
-            // still not ready
-        }
-
-    };
-
-
-// TODO: Extraer la funcionalidad de los drawables que no sea estrictamente dibujarse y crear una factoría par obtenerlos DrawableFactory
-
-})();
 
 

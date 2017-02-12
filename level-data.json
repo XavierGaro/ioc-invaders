@@ -3,7 +3,7 @@
     {
       "name": "Nivell 1",
       "description": "Aquest es el primer nivell del joc.<br>Fes servir els cursors per moure't i espai per disparar.",
-      "music": "rocketman",
+      "music": "defense-line",
       "background": {
         "layers": [
           {
@@ -104,7 +104,7 @@
               "formation": {
                 "type": "grid",
                 "amount": 9,
-                "spacer": 50
+                "spacer": 75
               },
               "position": {
                 "x": 1024,
@@ -230,7 +230,7 @@
     },
     {
       "name": "Nivell 2",
-      "music": "sunset",
+      "music": "star-commander",
       "description": "Aquest es el segon nivell del joc.",
       "background": {
         "layers": [
@@ -294,7 +294,7 @@
     {
       "name": "Nivell 3",
       "description": "Aquest es el tercer nivell del joc.",
-      "music": "rocketman",
+      "music": "defense-line",
       "background": {
         "layers": [
           {
