@@ -74,11 +74,12 @@
 
 <script>
     window.onload = function () {
-        var game = IOC_INVADERS({
-            "asset_data_url": "asset-data.json",
-            "entity_data_url": "entity-data.json",
-            "levels_data_url": "level-data.json"
-        });
+        var canvas = document.getElementById('game-canvas'),
+                game = IOC_INVADERS({
+                    "asset_data_url": "asset-data.json",
+                    "entity_data_url": "entity-data.json",
+                    "levels_data_url": "level-data.json"
+                }, canvas);
 
         game.start();
         document.getElementById('game-over').addEventListener('click', game.restart);

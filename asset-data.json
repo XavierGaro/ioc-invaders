@@ -170,8 +170,5 @@
         "volume": 0.25
       }
     ]
-  },
-  "canvas": {
-    "game": "game-canvas"
   }
 }

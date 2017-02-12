@@ -28,7 +28,7 @@ Array.prototype.contains = function (needle) {
 /**
  * Aquest es el mòdul que conté el joc evitant contaminar l'espai global.
  */
-var IOC_INVADERS = function (config) {
+var IOC_INVADERS = function (config, gameCanvas) {
     var GameState = {
             GAME_OVER: "GameOver",
             LOADING_NEXT_LEVEL: "LoadingNextLevel",
@@ -41,27 +41,25 @@ var IOC_INVADERS = function (config) {
         assetManager,
         gametime,
 
-        gameCanvas,
         gameContext,
 
 
         updatedSprites = [],
 
         entitiesRepository = (function () {
-            var entities = {},
+            var entities = {};
 
-                addEntity = function (name, data) {
-                    var entity = data;
+            function addEntity(name, data) {
+                var entity = data;
 
-                    entity.sprite = data.sprite;
+                entity.sprite = data.sprite;
 
-                    if (data.move) {
-                        entity.move = strategiesRepository.get(data.move);
-                    }
+                if (data.move) {
+                    entity.move = strategiesRepository.get(data.move);
+                }
 
-                    entities[name] = entity;
-                };
-
+                entities[name] = entity;
+            }
 
             return {
                 add: function (entity) {
@@ -92,7 +90,7 @@ var IOC_INVADERS = function (config) {
         strategiesRepository = (function () { //IIFE només exposa el mètode get, no cal constructor.
             var strategies = {
                 movement_pattern_a: function () {
-                    // Inicialització
+
                     if (!this.extra.ready) {
                         this.extra.speed = Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y));
                         this.extra.leftEdge = this.position.x - 10 * this.extra.speed;
@@ -127,7 +125,6 @@ var IOC_INVADERS = function (config) {
                 },
 
                 movement_pattern_b: function () {
-                    // Inicialització
 
                     this.position.x += this.speed.x;
                     this.position.y += this.speed.y;
@@ -135,7 +132,6 @@ var IOC_INVADERS = function (config) {
                 },
 
                 movement_pattern_c: function () {
-                    // Inicialització
 
                     if (!this.extra.ready) {
                         this.extra.age = 0;
@@ -159,7 +155,6 @@ var IOC_INVADERS = function (config) {
                 },
 
                 movement_pattern_d: function () {
-                    // Inicialització
 
                     if (!this.extra.ready) {
                         this.extra.age = 0;
@@ -233,13 +228,16 @@ var IOC_INVADERS = function (config) {
 
         poolConstructor = function (maxSize, generator, config) {
             var that = {},
-                size = maxSize,
-                disable = function (index) {
-                    that.pool[index].clear();
-                    that.pool.push((that.pool.splice(index, 1))[0]);
-                };
+                size = maxSize;
+
+
+            function disable(index) {
+                that.pool[index].clear();
+                that.pool.push((that.pool.splice(index, 1))[0]);
+            }
 
             that.actives = size;
+
             that.pool = [];
 
             for (var i = 0; i < size; i++) {
@@ -274,9 +272,7 @@ var IOC_INVADERS = function (config) {
                 that.actives = 0;
             };
 
-
             return that;
-
         },
 
         gameObjectConstructor = function (options) {
@@ -309,7 +305,6 @@ var IOC_INVADERS = function (config) {
             that.clear = function () {
                 console.error("Error. Aquest mètode no està implementat");
             };
-
 
             return that;
         },
@@ -465,11 +460,9 @@ var IOC_INVADERS = function (config) {
                 }
             };
 
-            // that.alive = false;
 
             that.start = function (data) {
 
-                // that.isColliding = false;
                 that.alive = true;
 
                 that.type = data.type;
@@ -511,10 +504,6 @@ var IOC_INVADERS = function (config) {
 
             };
 
-            /**
-             *
-             * @returns {boolean} Cert si aquest enemic s'ha d'eliminar
-             */
             that.update = function () {
 
                 // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
@@ -544,18 +533,7 @@ var IOC_INVADERS = function (config) {
         playerConstructor = function (options) {
             var that = spaceshipConstructor(options);
 
-            that.start(entitiesRepository.get('player', options.position, options.speed));
-
-            that.shoot = function (cannon) {
-                var origin;
-                if (cannon.lastShot > cannon.fireRate) {
-                    cannon.lastShot = 0;
-                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
-                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
-                }
-            };
-
-            var getInput = function () {
+            function getInput() {
                 if (inputController.KEY_STATUS.left) {
                     that.position.x -= that.speed.x;
 
@@ -581,6 +559,25 @@ var IOC_INVADERS = function (config) {
 
             };
 
+            function updateCannon() {
+                for (var i = 0; i < that.cannon.length; i++) {
+                    if (that.cannon[i].lastShot === undefined) {
+                        that.cannon[i].lastShot = that.cannon[i].fireRate + 1;
+                    }
+                    that.cannon[i].lastShot++;
+                }
+            };
+
+            that.start(entitiesRepository.get('player', options.position, options.speed));
+
+            that.shoot = function (cannon) {
+                var origin;
+                if (cannon.lastShot > cannon.fireRate) {
+                    cannon.lastShot = 0;
+                    origin = {x: that.position.x + cannon.position.x, y: that.position.y + cannon.position.y};
+                    that.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
+                }
+            };
 
             that.update = function () {
                 updateCannon();
@@ -595,16 +592,6 @@ var IOC_INVADERS = function (config) {
                 this.updateSprite();
                 this.render();
             };
-
-            var updateCannon = function () {
-                for (var i = 0; i < that.cannon.length; i++) {
-                    if (that.cannon[i].lastShot === undefined) {
-                        that.cannon[i].lastShot = that.cannon[i].fireRate + 1;
-                    }
-                    that.cannon[i].lastShot++;
-                }
-            };
-
 
             return that;
         },
@@ -632,32 +619,32 @@ var IOC_INVADERS = function (config) {
                             this.value -= this.acceleration;
                         }
                     }
-                },
-
-                move = function (layer) {
-                    layer.position.x += layer.speed.x * speedController.value;
-                    layer.position.y += layer.speed.y * speedController.value;
-
-                    if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
-                        layer.position.x = 0;
-                    }
-
-                    if (layer.position.y < -layer.image.height || layer.position.y > layer.image.height) {
-                        layer.position.y = 0;
-                    }
-
-                },
-
-                render = function (layer) {
-                    // Imatge actual
-                    gameContext.drawImage(
-                        layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
-
-                    // Següent imatge
-                    gameContext.drawImage(
-                        layer.image, layer.position.x + layer.image.width - 1,
-                        layer.position.y, layer.image.width, layer.image.height);
                 };
+
+            function move(layer) {
+                layer.position.x += layer.speed.x * speedController.value;
+                layer.position.y += layer.speed.y * speedController.value;
+
+                if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
+                    layer.position.x = 0;
+                }
+
+                if (layer.position.y < -layer.image.height || layer.position.y > layer.image.height) {
+                    layer.position.y = 0;
+                }
+
+            }
+
+            function render(layer) {
+                // Imatge actual
+                gameContext.drawImage(
+                    layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
+
+                // Següent imatge
+                gameContext.drawImage(
+                    layer.image, layer.position.x + layer.image.width - 1,
+                    layer.position.y, layer.image.width, layer.image.height);
+            }
 
 
             that.update = function () {
@@ -769,57 +756,16 @@ var IOC_INVADERS = function (config) {
                     sounds: {},
                     music: {}
                 },
-                intervals = {},
-                currentSong,
+                timeIntervals = {},
+                currentSong;
 
-                updateProgress = function () {
-                    if (progressCallback) {
-                        progressCallback(successCount + errorCount, queue.images.length);
-                    }
-                };
-
-            that.queueAsset = function (type, asset) {
-                queue[type].push(asset);
-            };
-
-            that.downloadAll = function (callback, args) {
-                var i;
-
-                if (queue.images.length === 0) {
-                    callback();
+            function updateProgress() {
+                if (progressCallback) {
+                    progressCallback(successCount + errorCount, queue.images.length);
                 }
+            }
 
-                // Primer es descarregan les imatges
-                for (i = 0; i < queue.images.length; i++) {
-                    var path = queue.images[i].path,
-                        id = queue.images[i].id,
-                        img = new Image();
-
-                    img.addEventListener("load", function () {
-                        successCount += 1;
-                        updateProgress();
-                        if (that.isDone()) {
-                            generateSprites();
-                            callback(args);
-                        }
-                    }, false);
-                    img.addEventListener("error", function () {
-                        errorCount += 1;
-                        updateProgress();
-                        if (that.isDone()) {
-                            generateSprites();
-                            callback(args);
-                        }
-                    }, false);
-                    img.src = path;
-                    cache.images[id] = img;
-                }
-
-                generateSounds();
-                generateMusic();
-            };
-
-            var generateSprites = function () {
+            function generateSprites () {
                 var pool;
 
                 for (var i = 0; i < queue.sprites.length; i++) {
@@ -840,15 +786,16 @@ var IOC_INVADERS = function (config) {
 
                     cache.sprites[queue.sprites[i].id] = pool;
                 }
-            };
+            }
 
-            var generateSounds = function () {
-                var pool, poolSize, sound;
-                for (var i = 0; i < queue.sounds.length; i++) {
+            function generateSounds () {
+                var pool, poolSize, sound, i, j;
+
+                for (i = 0; i < queue.sounds.length; i++) {
                     pool = [];
                     poolSize = 10; // nombre màxim de sons identics que es reprodueixen al mateix temps
-                    for (var j = 0; j < poolSize; j++) {
-                        var sound = new Audio(queue.sounds[i].path);
+                    for (j = 0; j < poolSize; j++) {
+                        sound = new Audio(queue.sounds[i].path);
                         sound.volume = queue.sounds[i].volume;
                         pool.push(sound);
                     }
@@ -859,11 +806,71 @@ var IOC_INVADERS = function (config) {
                     }
 
                 }
+            }
+
+            function isDone () {
+                return (queue.images.length == successCount + errorCount);
+            }
+
+            function fadeOutAudio () {
+                for (var id in cache.sounds) {
+                    for (var i = 0; i < cache.sounds[id].pool.length; i++) {
+                        var sound = cache.sounds[id].pool[i];
+                        sound.volume = 0;
+                    }
+                }
+            }
+
+            function generateMusic () {
+                for (var i = 0; i < queue.music.length; i++) {
+                    var sound = new Audio(queue.music[i].path);
+                    sound.volume = queue.music[i].volume;
+                    sound.loop = queue.music[i].loop;
+                    cache.music[queue.music[i].id] = sound;
+                }
+            }
+
+            that.queueAsset = function (type, asset) {
+                queue[type].push(asset);
             };
 
-            that.isDone = function () {
-                return (queue.images.length == successCount + errorCount);
+            that.downloadAll = function (callback, args) {
+                var i;
+
+                if (queue.images.length === 0) {
+                    callback();
+                }
+
+                for (i = 0; i < queue.images.length; i++) {
+                    var path = queue.images[i].path,
+                        id = queue.images[i].id,
+                        img = new Image();
+
+                    img.addEventListener("load", function () {
+                        successCount += 1;
+                        updateProgress();
+                        if (isDone()) {
+                            generateSprites();
+                            callback(args);
+                        }
+                    }, false);
+                    img.addEventListener("error", function () {
+                        errorCount += 1;
+                        updateProgress();
+                        if (isDone()) {
+                            generateSprites();
+                            callback(args);
+                        }
+                    }, false);
+                    img.src = path;
+                    cache.images[id] = img;
+                }
+
+                generateSounds();
+                generateMusic();
             };
+
+
 
             that.getImage = function (id) {
                 return cache.images[id];
@@ -890,20 +897,11 @@ var IOC_INVADERS = function (config) {
             that.fadeOutAudio = function (timer) {
                 that.clearIntervals();
                 if (timer) {
-                    intervals.fadeOutAudio = setTimeout(fadeOutAudio, timer);
+                    timeIntervals.fadeOutAudio = setTimeout(fadeOutAudio, timer);
                 } else {
                     fadeOutAudio();
                 }
 
-            };
-
-            var fadeOutAudio = function () {
-                for (var id in cache.sounds) {
-                    for (var i = 0; i < cache.sounds[id].pool.length; i++) {
-                        var sound = cache.sounds[id].pool[i];
-                        sound.volume = 0;
-                    }
-                }
             };
 
             that.fadeInAudio = function () {
@@ -918,18 +916,8 @@ var IOC_INVADERS = function (config) {
             };
 
             that.clearIntervals = function () {
-                clearInterval(intervals.fadeInAudio);
-                clearInterval(intervals.fadeOutAudio);
-            };
-
-
-            var generateMusic = function () {
-                for (var i = 0; i < queue.music.length; i++) {
-                    var sound = new Audio(queue.music[i].path);
-                    sound.volume = queue.music[i].volume;
-                    sound.loop = queue.music[i].loop;
-                    cache.music[queue.music[i].id] = sound;
-                }
+                clearInterval(timeIntervals.fadeInAudio);
+                clearInterval(timeIntervals.fadeOutAudio);
             };
 
             that.getMusic = function (id) {
@@ -951,12 +939,10 @@ var IOC_INVADERS = function (config) {
                     cache.music[id].currentTime = 0;
                 }
 
-
             };
 
             return that;
         },
-
 
         gameManagerConstructor = function () {
             var that = {},
@@ -978,26 +964,6 @@ var IOC_INVADERS = function (config) {
 
                 state,
 
-
-                initEnvironment = function (data) {
-                    gameCanvas = document.getElementById(data.canvas.game);
-                    gameContext = gameCanvas.getContext("2d");
-
-                    explosionPool = poolConstructor(100, explosionConstructor);
-
-                    enemyShotPool = poolConstructor(500, shotConstructor);
-                    enemyPool = poolConstructor(100, spaceshipConstructor, {
-                        pool: {
-                            bullet: enemyShotPool,
-                            explosion: explosionPool
-                        }
-                    });
-
-                    playerShotPool = poolConstructor(100, shotConstructor);
-
-                    that.loadAssets(data.assets);
-                },
-
                 ui = (function () {
                     var scoreText = document.getElementById('score'),
                         distanceText = document.getElementById('distance'),
@@ -1008,13 +974,13 @@ var IOC_INVADERS = function (config) {
                             scoreText.innerHTML = score;
                             distanceText.innerHTML = distance;
                         },
-                        showMessage: function (message, time) { // Temps en milisegons
+                        showMessage: function (message, duration) { // Temps en milisegons
                             messageText.innerHTML = message;
                             messageText.style.opacity = 1;
 
                             setTimeout(function () {
                                 messageText.style.opacity = 0;
-                            }, time);
+                            }, duration);
                         },
 
                         hideMessage: function () {
@@ -1050,84 +1016,22 @@ var IOC_INVADERS = function (config) {
                     };
                 })();
 
+            function initEnvironment (data) {
+                gameContext = gameCanvas.getContext("2d");
 
-            that.init = function () {
-                // Iniciem el joc indicant la url des de on es descarregaran les dades del joc.
-
-                that.loadData(config.asset_data_url, initEnvironment);
-
-            };
-
-
-            that.loadData = function (url, callback) {
-                var httpRequest = new XMLHttpRequest();
-
-                httpRequest.open("GET", url, true);
-                httpRequest.overrideMimeType('text/plain');
-                httpRequest.send(null);
-
-                httpRequest.onload = function () {
-                    var data = JSON.parse(httpRequest.responseText);
-                    callback(data);
-                };
-            };
-
-            that.loadAssets = function (assets) {
-                var i, type;
-
-                for (type in assets) {
-                    for (i = 0; i < assets[type].length; i++) {
-                        assetManager.queueAsset(type, assets[type][i]);
+                explosionPool = poolConstructor(100, explosionConstructor);
+                enemyShotPool = poolConstructor(500, shotConstructor);
+                enemyPool = poolConstructor(100, spaceshipConstructor, {
+                    pool: {
+                        bullet: enemyShotPool,
+                        explosion: explosionPool
                     }
-                }
-
-                assetManager.downloadAll(that.loadEnemiesData);
-            };
-
-
-            that.loadEnemiesData = function () {
-                that.loadData(config.entity_data_url, function (data) {
-
-                    entitiesRepository.add(data);
-                    that.loadLevelsData();
-                })
-            };
-
-            that.loadLevelsData = function () {
-                that.loadData(config.levels_data_url, function (data) {
-                    levels = data.levels;
-                    that.start();
-                });
-            };
-
-            that.start = function () {
-
-                background = backgroundConstructor({
-                    context: gameContext
                 });
 
-                that.restart();
-                update();
+                playerShotPool = poolConstructor(100, shotConstructor);
 
-            };
-
-            that.startLevel = function (level) {
-                var message = levels[level].name
-                    + "<p><span>"
-                    + levels[level].description
-                    + "</span></p>";
-                ui.showMessage(message, 3000);
-
-                background.start(levels[level].background);
-                assetManager.getMusic(levels[currentLevel].music);
-
-                levelEnded = false;
-                nextWave = 0;
-                distance = 0;
-
-                player.position = {x: 10, y: 256};
-            };
-
+                that.loadAssets(data.assets);
+            }
 
             function update() {
                 window.requestAnimationFrame(update);
@@ -1241,7 +1145,7 @@ var IOC_INVADERS = function (config) {
                 return impacts;
             }
 
-            function updateWaves(){
+            function updateWaves() {
                 var waves = levels[currentLevel].waves,
                     currentWave;
 
@@ -1381,7 +1285,83 @@ var IOC_INVADERS = function (config) {
                     assetManager.getMusic("game-over");
                 }, 2000);
 
+            }
+
+            that.init = function () {
+                // Iniciem el joc indicant la url des de on es descarregaran les dades del joc.
+                that.loadData(config.asset_data_url, initEnvironment);
             };
+
+            that.loadData = function (url, callback) {
+                var httpRequest = new XMLHttpRequest();
+
+                httpRequest.open("GET", url, true);
+                httpRequest.overrideMimeType('text/plain');
+                httpRequest.send(null);
+
+                httpRequest.onload = function () {
+                    var data = JSON.parse(httpRequest.responseText);
+                    callback(data);
+                };
+            };
+
+            that.loadAssets = function (assets) {
+                var i, type;
+
+                for (type in assets) {
+                    for (i = 0; i < assets[type].length; i++) {
+                        assetManager.queueAsset(type, assets[type][i]);
+                    }
+                }
+
+                assetManager.downloadAll(that.loadEnemiesData);
+            };
+
+
+            that.loadEnemiesData = function () {
+                that.loadData(config.entity_data_url, function (data) {
+
+                    entitiesRepository.add(data);
+                    that.loadLevelsData();
+                })
+            };
+
+            that.loadLevelsData = function () {
+                that.loadData(config.levels_data_url, function (data) {
+                    levels = data.levels;
+                    that.start();
+                });
+            };
+
+            that.start = function () {
+
+                background = backgroundConstructor({
+                    context: gameContext
+                });
+
+                that.restart();
+                update();
+
+            };
+
+            that.startLevel = function (level) {
+                var message = levels[level].name
+                    + "<p><span>"
+                    + levels[level].description
+                    + "</span></p>";
+                ui.showMessage(message, 3000);
+
+                background.start(levels[level].background);
+                assetManager.getMusic(levels[currentLevel].music);
+
+                levelEnded = false;
+                nextWave = 0;
+                distance = 0;
+
+                player.position = {x: 10, y: 256};
+            };
+
+
 
             that.restart = function () {
 
@@ -1414,29 +1394,20 @@ var IOC_INVADERS = function (config) {
             };
 
             return that;
-        },
+        };
 
-        /**
-         * Crea les instancias dels gestors i controladors i inicia el joc.
-         */
-        init = function () {
-            // Creem les instancies dels gestors i controlladors
+    return {
+        start: function () {
             gameManager = gameManagerConstructor();
             assetManager = assetManagerConstructor(function (current, total) {
-                //console.log("Downloaded asset: " + current + "/" + total);
             });
 
             gameManager.init();
         },
 
-        restart = function () {
+        restart: function () {
             gameManager.restart();
-        };
-
-    return {
-        start: init,
-
-        restart: restart
+        }
     }
 };
 
