@@ -11,23 +11,11 @@
 
 <h1>IOC INVADERS</h1>
 
-<div class="game-background">
-    <canvas id="game-canvas" width="1024" height="512" class="fadeable">
-        Your browser does not support canvas. Please try again with a different browser.
-    </canvas>
-
-    <div class="ui">
-        <div class="score">SCORE: <span id="score"></span></div>
-        <div class="distance">DISTANCE: <span id="distance"></span></div>
-    </div>
-
-    <div class="game-over" id="game-over">GAME OVER<p><span>Restart</span></p></div>
-    <div class="messages fadeable" id="messages"></div>
+<div id="game-background">
 </div>
 
-
 <div class="credits">
-    <h2>CREDITS</h2>
+    <h2>CRÈDITS</h2>
     <div>
         <h3>Música</h3>
         <ul>
@@ -60,8 +48,8 @@
             <li>Fons i trets: Xavier Garcia Rogríguez</li>
         </ul>
     </div>
-
 </div>
+
 <div class="footer">
     Xavier Garcia Rodríguez 2017. <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Llicencia Apache
     2.0</a>. Podeu trobar el codi font d'aquest joc a <a target="_blank"
@@ -69,21 +57,6 @@
 </div>
 
 <script src="js/ioc-invaders.js">
-</script>
-
-
-<script>
-    window.onload = function () {
-        var canvas = document.getElementById('game-canvas'),
-                game = IOC_INVADERS({
-                    "asset_data_url": "asset-data.json",
-                    "entity_data_url": "entity-data.json",
-                    "levels_data_url": "level-data.json"
-                }, canvas);
-
-        game.start();
-        document.getElementById('game-over').addEventListener('click', game.restart);
-    }
 </script>
 
 </body>

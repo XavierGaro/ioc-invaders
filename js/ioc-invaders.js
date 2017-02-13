@@ -765,7 +765,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
                 }
             }
 
-            function generateSprites () {
+            function generateSprites() {
                 var pool;
 
                 for (var i = 0; i < queue.sprites.length; i++) {
@@ -788,7 +788,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
                 }
             }
 
-            function generateSounds () {
+            function generateSounds() {
                 var pool, poolSize, sound, i, j;
 
                 for (i = 0; i < queue.sounds.length; i++) {
@@ -808,11 +808,11 @@ var IOC_INVADERS = function (config, gameCanvas) {
                 }
             }
 
-            function isDone () {
+            function isDone() {
                 return (queue.images.length == successCount + errorCount);
             }
 
-            function fadeOutAudio () {
+            function fadeOutAudio() {
                 for (var id in cache.sounds) {
                     for (var i = 0; i < cache.sounds[id].pool.length; i++) {
                         var sound = cache.sounds[id].pool[i];
@@ -821,7 +821,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
                 }
             }
 
-            function generateMusic () {
+            function generateMusic() {
                 for (var i = 0; i < queue.music.length; i++) {
                     var sound = new Audio(queue.music[i].path);
                     sound.volume = queue.music[i].volume;
@@ -869,7 +869,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
                 generateSounds();
                 generateMusic();
             };
-
 
 
             that.getImage = function (id) {
@@ -1016,7 +1015,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
                     };
                 })();
 
-            function initEnvironment (data) {
+            function initEnvironment(data) {
                 gameContext = gameCanvas.getContext("2d");
 
                 explosionPool = poolConstructor(100, explosionConstructor);
@@ -1362,7 +1361,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
             };
 
 
-
             that.restart = function () {
 
                 ui.hideGameOver();
@@ -1411,6 +1409,33 @@ var IOC_INVADERS = function (config, gameCanvas) {
     }
 };
 
+window.onload = function () {
+    var gameContainer = document.getElementById('game-background'),
+        canvas,
+        game;
 
+    gameContainer.innerHTML = '' +
+        '<canvas id="game-canvas" width="1024" height="512" class="fadeable">' +
+        'Your browser does not support canvas. Please try again with a different browser.' +
+        '</canvas>' +
+        '<div class="ui">' +
+        '   <div class="score">SCORE: <span id="score"></span></div>' +
+        '   <div class="distance">DISTANCE: <span id="distance"></span></div>' +
+        '</div>' +
+        '<div class="game-over" id="game-over">GAME OVER<p><span>Restart</span></p></div>' +
+        '<div class="messages fadeable" id="messages"></div>';
+
+    canvas = document.getElementById('game-canvas');
+
+    game = IOC_INVADERS({
+        "asset_data_url": "asset-data.json",
+        "entity_data_url": "entity-data.json",
+        "levels_data_url": "level-data.json"
+    }, canvas);
+
+    game.start();
+
+    document.getElementById('game-over').addEventListener('click', game.restart);
+}
 
 
