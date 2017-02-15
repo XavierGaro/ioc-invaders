@@ -24,11 +24,7 @@ Array.prototype.contains = function (needle) {
     return false;
 };
 
-
-/**
- * Aquest es el mòdul que conté el joc evitant contaminar l'espai global.
- */
-var IOC_INVADERS = function (config, gameCanvas) {
+var IOC_INVADERS = function () {
     var GameState = {
             GAME_OVER: "GameOver",
             LOADING_NEXT_LEVEL: "LoadingNextLevel",
@@ -37,7 +33,9 @@ var IOC_INVADERS = function (config, gameCanvas) {
 
         MAX_TIME_OUTSIDE_BOUNDARIES = 180,// nombre de frames fora de la pantalla avans de esborrar-lo. a 60 FPS això equival a 3s
 
-        gameManager,
+        gameCanvas,
+        config,
+        gameEngine,
         assetManager,
         gametime,
 
@@ -51,8 +49,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
 
             function addEntity(name, data) {
                 var entity = data;
-
-                entity.sprite = data.sprite;
 
                 if (data.move) {
                     entity.move = strategiesRepository.get(data.move);
@@ -87,8 +83,9 @@ var IOC_INVADERS = function (config, gameCanvas) {
             }
         })(),
 
-        strategiesRepository = (function () { //IIFE només exposa el mètode get, no cal constructor.
+        strategiesRepository = (function () {
             var strategies = {
+
                 movement_pattern_a: function () {
 
                     if (!this.extra.ready) {
@@ -213,7 +210,9 @@ var IOC_INVADERS = function (config, gameCanvas) {
             };
 
             document.onkeyup = function (e) {
+
                 var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+
                 if (KEY_CODES[keyCode]) {
                     e.preventDefault();
                     KEY_STATUS[KEY_CODES[keyCode]] = false;
@@ -226,50 +225,119 @@ var IOC_INVADERS = function (config, gameCanvas) {
             }
         })(),
 
-        poolConstructor = function (maxSize, generator, config) {
+        backgroundConstructor = function () {
             var that = {},
-                size = maxSize;
+                layers = {};
 
+            function move(layer) {
+                layer.position.x += layer.speed.x;
+                layer.position.y += layer.speed.y;
 
-            function disable(index) {
-                that.pool[index].clear();
-                that.pool.push((that.pool.splice(index, 1))[0]);
+                if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
+                    layer.position.x = 0;
+                }
+
+                if (layer.position.y < -layer.image.height || layer.position.y > layer.image.height) {
+                    layer.position.y = 0;
+                }
+
             }
 
-            that.actives = size;
+            function render(layer) {
+                // Imatge actual
+                gameContext.drawImage(
+                    layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
 
-            that.pool = [];
-
-            for (var i = 0; i < size; i++) {
-                that.pool[i] = generator(config);
+                // Següent imatge
+                gameContext.drawImage(
+                    layer.image, layer.position.x + layer.image.width - 1,
+                    layer.position.y, layer.image.width, layer.image.height);
             }
 
-            that.instantiate = function (type, position, speed) {
-                var instance = that.pool[size - 1].start(entitiesRepository.get(type, position, speed));
-                that.pool.unshift(that.pool.pop());
-                return instance;
-            };
 
             that.update = function () {
-                for (var i = 0; i < size; i++) {
-                    // Només dibuixiem fins que trobem un objecte que no sigui viu
-                    if (that.pool[i].alive) {
-                        if (that.pool[i].update()) {
-                            // Si update ha retornat cert es que s'ha de desactivar
-                            disable(i);
-                        }
+                for (var i = 0; i < layers.length; i++) {
+                    move(layers[i]);
+                    render(layers[i]);
+                }
+            };
+
+
+            that.start = function (data) {
+                layers = data.layers;
+
+                for (var i = 0; i < layers.length; i++) {
+                    layers[i].image = assetManager.getImage(layers[i].id);
+                    layers[i].position = {x: 0, y: 0}
+                }
+            };
+
+
+            that.clear = function () {
+                layers = {};
+                speed.reset();
+            };
+
+
+            return that;
+        },
+
+        spriteConstructor = function (options) {
+
+            var that = {},
+                frameIndex = 0,
+                ticksPerFrame = options.ticksPerFrame || 0,
+                numberOfFrames = options.numberOfFrames || 1,
+                image = options.image,
+                width = image.width,
+                height = image.height,
+                loop = options.loop === undefined ? true : options.loop;
+
+            that.tickCount = 0;
+            that.lastTick = gametime;
+            that.position = options.position || {x: 0, y: 0};
+            that.size = {width: width / numberOfFrames, height: height};
+            that.isDone = false;
+
+            that.update = function () {
+
+                if (updatedSprites.contains(that)) {
+                    return;
+                } else {
+                    updatedSprites.push(that);
+                }
+
+                that.tickCount++;
+                that.lastTick = gametime;
+
+                if (that.tickCount > ticksPerFrame) {
+                    that.tickCount = 0;
+
+                    if (frameIndex < numberOfFrames - 1) {
+                        frameIndex += 1;
                     } else {
-                        that.actives = i;
-                        break;
+                        that.isDone = !loop;
+                        frameIndex = 0;
                     }
                 }
             };
 
-            that.clear = function () {
-                for (var i = 0; i < size; i++) {
-                    that.pool[i].alive = false;
+            that.render = function () {
+
+                if (that.isDone) {
+                    return;
                 }
-                that.actives = 0;
+
+                gameContext.drawImage(
+                    image,
+                    frameIndex * width / numberOfFrames,
+                    0,
+                    width / numberOfFrames,
+                    height,
+                    that.position.x,
+                    that.position.y,
+                    width / numberOfFrames,
+                    height);
             };
 
             return that;
@@ -316,7 +384,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
             that.speed = null;
             that.outsideBoundariesTime = 0;
 
-            that.update = function () {
+            that.move = function () {
                 console.error("Error. Aquest mètode no està implementat");
             };
 
@@ -380,7 +448,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
             var that = movingGameObjectConstructor(options);
 
             that.start = function (data) {
-                // that.isColliding = false;
                 that.alive = true;
 
                 that.type = data.type;
@@ -506,7 +573,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
 
             that.update = function () {
 
-                // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
                 if (that.isDestroyed) {
                     that.explosionPool.instantiate(that.explosion, that.position);
                     return true;
@@ -553,11 +619,11 @@ var IOC_INVADERS = function (config, gameCanvas) {
                     that.fire();
                 }
 
-                // Evitem que surti de la pantalla
+                // S'evita que surti de la pantalla
                 that.position.x = that.position.x.clamp(0, gameCanvas.width - that.sprite.size.width);
                 that.position.y = that.position.y.clamp(0, gameCanvas.height - that.sprite.size.height);
 
-            };
+            }
 
             function updateCannon() {
                 for (var i = 0; i < that.cannon.length; i++) {
@@ -566,7 +632,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
                     }
                     that.cannon[i].lastShot++;
                 }
-            };
+            }
 
             that.start(entitiesRepository.get('player', options.position, options.speed));
 
@@ -591,150 +657,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
                 getInput();
                 this.updateSprite();
                 this.render();
-            };
-
-            return that;
-        },
-
-
-        backgroundConstructor = function () {
-            var that = {},
-                layers = {},
-
-                speedController = {
-                    value: 0,
-                    target: 0,
-                    acceleration: 0.01,
-
-                    reset: function () {
-                        this.value = 0;
-                        this.target = 0;
-                        this.acceleration = 0.002;
-                    },
-
-                    update: function () {
-                        if (this.value < this.target) {
-                            this.value += this.acceleration;
-                        } else if (this.value > this.target) {
-                            this.value -= this.acceleration;
-                        }
-                    }
-                };
-
-            function move(layer) {
-                layer.position.x += layer.speed.x * speedController.value;
-                layer.position.y += layer.speed.y * speedController.value;
-
-                if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
-                    layer.position.x = 0;
-                }
-
-                if (layer.position.y < -layer.image.height || layer.position.y > layer.image.height) {
-                    layer.position.y = 0;
-                }
-
-            }
-
-            function render(layer) {
-                // Imatge actual
-                gameContext.drawImage(
-                    layer.image, layer.position.x, layer.position.y, layer.image.width, layer.image.height);
-
-                // Següent imatge
-                gameContext.drawImage(
-                    layer.image, layer.position.x + layer.image.width - 1,
-                    layer.position.y, layer.image.width, layer.image.height);
-            }
-
-
-            that.update = function () {
-                speedController.update();
-                for (var i = 0; i < layers.length; i++) {
-                    move(layers[i]);
-                    render(layers[i]);
-                }
-
-            };
-
-
-            that.start = function (data) {
-                layers = data.layers;
-
-                speedController.value = data.speed.start;
-                speedController.target = data.speed.target;
-
-                for (var i = 0; i < layers.length; i++) {
-                    layers[i].image = assetManager.getImage(layers[i].id);
-                    layers[i].position = {x: 0, y: 0}
-                }
-            };
-
-
-            that.clear = function () {
-                layers = {};
-                speed.reset();
-            };
-
-
-            return that;
-        },
-
-        spriteConstructor = function (options) {
-
-            var that = {},
-                frameIndex = 0,
-                ticksPerFrame = options.ticksPerFrame || 0,
-                numberOfFrames = options.numberOfFrames || 1,
-                image = options.image,
-                width = image.width,
-                height = image.height,
-                loop = options.loop === undefined ? true : options.loop;
-
-            that.tickCount = 0;
-            that.lastTick = gametime;
-            that.position = options.position || {x: 0, y: 0};
-            that.size = {width: width / numberOfFrames, height: height};
-            that.isDone = false;
-
-            that.update = function () {
-
-                if (updatedSprites.contains(that)) {
-                    return;
-                } else {
-                    updatedSprites.push(that);
-                }
-
-                that.tickCount++;
-                that.lastTick = gametime;
-
-                if (that.tickCount > ticksPerFrame) {
-                    that.tickCount = 0;
-
-                    if (frameIndex < numberOfFrames - 1) {
-                        frameIndex += 1;
-                    } else {
-                        that.isDone = !loop;
-                        frameIndex = 0;
-                    }
-                }
-            };
-
-            that.render = function () {
-
-                if (that.isDone) {
-                    return;
-                }
-
-                gameContext.drawImage(
-                    image,
-                    frameIndex * width / numberOfFrames,
-                    0,
-                    width / numberOfFrames,
-                    height,
-                    that.position.x,
-                    that.position.y,
-                    width / numberOfFrames,
-                    height);
             };
 
             return that;
@@ -766,13 +688,12 @@ var IOC_INVADERS = function (config, gameCanvas) {
             }
 
             function generateSprites() {
-                var pool;
+                var pool, poolSize;
 
                 for (var i = 0; i < queue.sprites.length; i++) {
 
                     pool = [];
-
-                    var poolSize = 10;
+                    poolSize = 10;
 
                     for (var j = 0; j < poolSize; j++) {
                         pool.push(spriteConstructor({
@@ -789,12 +710,12 @@ var IOC_INVADERS = function (config, gameCanvas) {
             }
 
             function generateSounds() {
-                var pool, poolSize, sound, i, j;
+                var pool, poolSize, sound;
 
-                for (i = 0; i < queue.sounds.length; i++) {
+                for (var i = 0; i < queue.sounds.length; i++) {
                     pool = [];
                     poolSize = 10; // nombre màxim de sons identics que es reprodueixen al mateix temps
-                    for (j = 0; j < poolSize; j++) {
+                    for (var j = 0; j < poolSize; j++) {
                         sound = new Audio(queue.sounds[i].path);
                         sound.volume = queue.sounds[i].volume;
                         pool.push(sound);
@@ -835,13 +756,12 @@ var IOC_INVADERS = function (config, gameCanvas) {
             };
 
             that.downloadAll = function (callback, args) {
-                var i;
 
                 if (queue.images.length === 0) {
                     callback();
                 }
 
-                for (i = 0; i < queue.images.length; i++) {
+                for (var i = 0; i < queue.images.length; i++) {
                     var path = queue.images[i].path,
                         id = queue.images[i].id,
                         img = new Image();
@@ -893,10 +813,10 @@ var IOC_INVADERS = function (config, gameCanvas) {
                 sounds.currentSound = (sounds.currentSound + 1) % sounds.pool.length;
             };
 
-            that.fadeOutAudio = function (timer) {
+            that.fadeOutAudio = function (timeBeforeFadeOut) {
                 that.clearIntervals();
-                if (timer) {
-                    timeIntervals.fadeOutAudio = setTimeout(fadeOutAudio, timer);
+                if (timeBeforeFadeOut) {
+                    timeIntervals.fadeOutAudio = setTimeout(fadeOutAudio, timeBeforeFadeOut);
                 } else {
                     fadeOutAudio();
                 }
@@ -943,7 +863,56 @@ var IOC_INVADERS = function (config, gameCanvas) {
             return that;
         },
 
-        gameManagerConstructor = function () {
+        gameObjectPoolConstructor = function (maxSize, generator, config) {
+            var that = {},
+                size = maxSize;
+
+
+            function disable(index) {
+                that.pool[index].clear();
+                that.pool.push((that.pool.splice(index, 1))[0]);
+            }
+
+            that.actives = size;
+
+            that.pool = [];
+
+            for (var i = 0; i < size; i++) {
+                that.pool[i] = generator(config);
+            }
+
+            that.instantiate = function (type, position, speed) {
+                var instance = that.pool[size - 1].start(entitiesRepository.get(type, position, speed));
+                that.pool.unshift(that.pool.pop());
+                return instance;
+            };
+
+            that.update = function () {
+                for (var i = 0; i < size; i++) {
+                    // Només dibuixiem fins que trobem un objecte que no sigui viu
+                    if (that.pool[i].alive) {
+                        if (that.pool[i].update()) {
+                            // Si update ha retornat cert es que s'ha de desactivar
+                            disable(i);
+                        }
+                    } else {
+                        that.actives = i;
+                        break;
+                    }
+                }
+            };
+
+            that.clear = function () {
+                for (var i = 0; i < size; i++) {
+                    that.pool[i].alive = false;
+                }
+                that.actives = 0;
+            };
+
+            return that;
+        },
+
+        gameEngineConstructor = function () {
             var that = {},
                 levels = {},
                 currentLevel,
@@ -1000,7 +969,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
                             setTimeout(function () {
                                 gameCanvas.style.opacity = 1;
                                 callback();
-                            }, 3000); // la transicion durea 3s
+                            }, 3000); // la transicion dura 3s
                         },
 
                         fadeIn: function () {
@@ -1018,16 +987,16 @@ var IOC_INVADERS = function (config, gameCanvas) {
             function initEnvironment(data) {
                 gameContext = gameCanvas.getContext("2d");
 
-                explosionPool = poolConstructor(100, explosionConstructor);
-                enemyShotPool = poolConstructor(500, shotConstructor);
-                enemyPool = poolConstructor(100, spaceshipConstructor, {
+                explosionPool = gameObjectPoolConstructor(100, explosionConstructor);
+                enemyShotPool = gameObjectPoolConstructor(500, shotConstructor);
+                enemyPool = gameObjectPoolConstructor(100, spaceshipConstructor, {
                     pool: {
                         bullet: enemyShotPool,
                         explosion: explosionPool
                     }
                 });
 
-                playerShotPool = poolConstructor(100, shotConstructor);
+                playerShotPool = gameObjectPoolConstructor(100, shotConstructor);
 
                 that.loadAssets(data.assets);
             }
@@ -1078,7 +1047,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
                         impactInfo[i].source.isDestroyed = true;
                         impactInfo[i].target.isDestroyed = true;
                         score += impactInfo[i].target.points;
-                        //console.log("points", impactInfo[i].target.points);
                     }
                 }
 
@@ -1249,7 +1217,7 @@ var IOC_INVADERS = function (config, gameCanvas) {
 
 
                     default:
-                        console.log("Error, no es reconeix el tipus de formació")
+                        console.log("Error, no es reconeix el tipus de formació");
                 }
 
             }
@@ -1287,7 +1255,6 @@ var IOC_INVADERS = function (config, gameCanvas) {
             }
 
             that.init = function () {
-                // Iniciem el joc indicant la url des de on es descarregaran les dades del joc.
                 that.loadData(config.asset_data_url, initEnvironment);
             };
 
@@ -1305,19 +1272,17 @@ var IOC_INVADERS = function (config, gameCanvas) {
             };
 
             that.loadAssets = function (assets) {
-                var i, type;
-
-                for (type in assets) {
-                    for (i = 0; i < assets[type].length; i++) {
+                for (var type in assets) {
+                    for (var i = 0; i < assets[type].length; i++) {
                         assetManager.queueAsset(type, assets[type][i]);
                     }
                 }
 
-                assetManager.downloadAll(that.loadEnemiesData);
+                assetManager.downloadAll(that.loadEntititesData);
             };
 
 
-            that.loadEnemiesData = function () {
+            that.loadEntititesData = function () {
                 that.loadData(config.entity_data_url, function (data) {
 
                     entitiesRepository.add(data);
@@ -1395,19 +1360,22 @@ var IOC_INVADERS = function (config, gameCanvas) {
         };
 
     return {
-        start: function () {
-            gameManager = gameManagerConstructor();
+        start: function (conf, canvas) {
+            config = conf;
+            gameCanvas = canvas;
+            gameEngine = gameEngineConstructor();
             assetManager = assetManagerConstructor(function (current, total) {
+                console.log("Carregats:" + current + "/" + total);
             });
 
-            gameManager.init();
+            gameEngine.init();
         },
 
         restart: function () {
-            gameManager.restart();
+            gameEngine.restart();
         }
     }
-};
+}();
 
 window.onload = function () {
     var gameContainer = document.getElementById('game-background'),
@@ -1427,15 +1395,11 @@ window.onload = function () {
 
     canvas = document.getElementById('game-canvas');
 
-    game = IOC_INVADERS({
+    IOC_INVADERS.start({
         "asset_data_url": "asset-data.json",
         "entity_data_url": "entity-data.json",
         "levels_data_url": "level-data.json"
     }, canvas);
 
-    game.start();
-
-    document.getElementById('game-over').addEventListener('click', game.restart);
-}
-
-
+    document.getElementById('game-over').addEventListener('click', IOC_INVADERS.restart);
+};

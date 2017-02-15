@@ -1,3 +1,11 @@
+body {
+    color: white;
+    background-color: gray;
+    text-align: center;
+    font-family: 'Russo One', sans-serif;
+    text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+}
+
 canvas {
     margin: 0 auto;
     background: transparent;
@@ -8,31 +16,9 @@ canvas {
     right: 0;
 }
 
-#game-background{
-    position: relative;
-    margin: 0 auto;
-    width:1024px;
-    height: 512px;
-    border: 1px solid black;
-    -webkit-box-shadow: 3px 5px 10px 2px rgba(0,0,0,0.39);
-    -moz-box-shadow: 3px 5px 10px 2px rgba(0,0,0,0.39);
-    box-shadow: 3px 5px 10px 2px rgba(0,0,0,0.39);
-    background-color: black;
-}
-
-body {
-    color:white;
-    background-color: gray;
-    text-align: center;
-    font-family: 'Russo One', sans-serif;
-    /*color: #fff;*/
-    text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
-}
-
-
 h1, h2, h3 {
-    margin:0;
-    line-height:1;
+    margin: 0;
+    line-height: 1;
 }
 
 h1 {
@@ -40,12 +26,43 @@ h1 {
 }
 
 h2 {
-    padding:15px;
+    color: red;
+    padding: 15px;
     font-size: 50px;
 }
 
 h3 {
     font-size: 40px;
+    color: #FFD700;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+    color: white;
+}
+
+li {
+    font-family: 'Exo', sans-serif;
+}
+
+a {
+    color: cornflowerblue;
+    text-decoration: none;
+    border-bottom: 1px dotted;
+}
+
+#game-background {
+    position: relative;
+    margin: 0 auto;
+    width: 1024px;
+    height: 512px;
+    border: 1px solid black;
+    -webkit-box-shadow: 3px 5px 10px 2px rgba(0, 0, 0, 0.39);
+    -moz-box-shadow: 3px 5px 10px 2px rgba(0, 0, 0, 0.39);
+    box-shadow: 3px 5px 10px 2px rgba(0, 0, 0, 0.39);
+    background-color: black;
 }
 
 #background {
@@ -53,47 +70,49 @@ h3 {
 }
 
 .ui {
-    margin:0 auto;
+    margin: 0 auto;
     width: 1024px;
     position: relative;
     top: 0;
 }
 
-.score, .distance{
+.score, .distance {
     position: absolute;
     top: 5px;
     left: 5px;
     color: #FFF;
-    cursor:default;
+    cursor: default;
     width: 150px;
-    text-align:left;
+    text-align: left;
     font-family: 'Exo', sans-serif;
 }
 
 .score span, .distance span {
-    float:right;
+    float: right;
 }
 
-.game-over, .messages{
+.distance {
+    top: 20px;
+}
+
+.game-over, .messages {
     position: absolute;
     top: 180px;
-    left:0;
-    right:0;
+    left: 0;
+    right: 0;
     color: red;
     font-size: 40px;
-    cursor:default;
+    cursor: default;
 }
 
-
-.game-over span, .messages span{
+.game-over span, .messages span {
     font-size: 20px;
     position: relative;
-
 }
+
 .game-over span {
     cursor: pointer;
 }
-
 
 .game-over {
     z-index: 100;
@@ -103,10 +122,6 @@ h3 {
 
 .game-over span:hover, .messages {
     color: #FFD700;
-}
-
-.distance {
-    top: 20px;
 }
 
 .fadeable {
@@ -122,35 +137,9 @@ h3 {
     width: 1024px;
 }
 
-
 .credits div {
     width: 33%;
     float: left;
-}
-
-h2 {
-    color: red;
-}
-
-h3 {
-    color: #FFD700;
-}
-
-ul {
-    list-style: none;
-    padding:0;
-    text-align: center;
-    color: white;
-}
-
-li {
-    font-family: 'Exo', sans-serif;
-}
-
-a {
-    color: cornflowerblue;
-    text-decoration: none;
-    border-bottom: 1px dotted;
 }
 
 .footer {
