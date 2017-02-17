@@ -191,7 +191,8 @@ var IOC_INVADERS = function () {
                     37: 'left',
                     38: 'up',
                     39: 'right',
-                    40: 'down'
+                    40: 'down',
+                    13: 'enter'
                 },
 
                 KEY_STATUS = {};
@@ -619,6 +620,11 @@ var IOC_INVADERS = function () {
                     that.fire();
                 }
 
+                if (inputController.KEY_STATUS.enter && !that.isDestroyed) {
+                    that.specialAttack();
+                }
+
+
                 // S'evita que surti de la pantalla
                 that.position.x = that.position.x.clamp(0, gameCanvas.width - that.sprite.size.width);
                 that.position.y = that.position.y.clamp(0, gameCanvas.height - that.sprite.size.height);
@@ -657,6 +663,13 @@ var IOC_INVADERS = function () {
                 getInput();
                 this.updateSprite();
                 this.render();
+            };
+
+            that.specialAttack = function () {
+                var enemies = gameEngine.getActiveEnemies();
+                for (var i=0; i<enemies.length; i++) {
+                    enemies[i].isDestroyed = true;
+                }
             };
 
             return that;
@@ -910,6 +923,8 @@ var IOC_INVADERS = function () {
             };
 
             return that;
+
+
         },
 
         gameEngineConstructor = function () {
@@ -1215,6 +1230,17 @@ var IOC_INVADERS = function () {
                         }
                         break;
 
+                    case "random":
+                        originPosition = {x: wave.position.x, y: wave.position.y};
+                        spacer = wave.formation.spacer;
+
+                        for (i = 0; i < wave.formation.amount; i++) {
+                            enemyPool.instantiate(wave.type, {
+                                x: originPosition.x + Math.random() * (spacer * 2) - spacer,
+                                y: originPosition.y + Math.random() * (spacer * 2) - spacer
+                            }, wave.speed);
+                        }
+                        break;
 
                     default:
                         console.log("Error, no es reconeix el tipus de formació");
@@ -1354,6 +1380,12 @@ var IOC_INVADERS = function () {
 
                 ui.fadeIn();
                 that.startLevel(currentLevel);
+            };
+
+            that.getActiveEnemies = function() {
+                var enemies = enemyPool.pool.slice(0, enemyPool.actives);
+
+                return enemies;
             };
 
             return that;

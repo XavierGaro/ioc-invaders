@@ -43,10 +43,9 @@
             {
               "type": "alien_a",
               "formation": {
-                "type": "column",
-                "amount": 4,
-                "column_height": 350,
-                "spacer": 50
+                "type": "random",
+                "amount": 10,
+                "spacer": 100
               },
               "position": {
                 "x": 1024,
@@ -218,10 +217,7 @@
             }
           ]
         }
-
       ],
-
-
       "end": 1800
     },
     {
@@ -348,6 +344,89 @@
         }
       ],
       "end": 500
+    },
+    {
+      "name": "Nivell 4",
+      "description": "Aquest es el quart nivell del joc.",
+      "music": "star-commander",
+      "background": {
+        "layers": [
+          {
+            "id": "bg_layer_1_green",
+            "speed": {
+              "x": -2,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_2",
+            "speed": {
+              "x": -4,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_3_green",
+            "speed": {
+              "x": -8,
+              "y": 0
+            }
+          },
+          {
+            "id": "bg_layer_4",
+            "speed": {
+              "x": -16,
+              "y": 0
+            }
+          }
+        ]
+      },
+      "waves": [
+        {
+          "distance": 200,
+          "spawns": [
+            {
+              "type": "alien_a",
+              "formation": {
+                "type": "row",
+                "amount": 5,
+                "spacer": 50
+              },
+              "position": {
+                "x": 1024,
+                "y": 100
+              },
+              "speed": {
+                "x": -2,
+                "y": 0
+              }
+            }
+          ]
+        },
+        {
+          "distance": 200,
+          "spawns": [
+            {
+              "type": "alien_a",
+              "formation": {
+                "type": "column",
+                "amount": 5,
+                "column_height": 1000,
+                "spacer": 50
+              },
+              "position": {
+                "x": 1024,
+                "y": 0
+              },
+              "speed": {
+                "x": 0,
+                "y": -2
+              }
+            }
+          ]
+        }
+      ],
+      "end": 600
     }
   ]
 }
