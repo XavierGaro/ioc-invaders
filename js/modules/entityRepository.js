@@ -25,6 +25,7 @@ export function addEntity(entity) {
 
 // Retorna un nou objecte amb les propietats originals més les mesclades
 export function getEntity(name, position, speed) {
+    console.log("GetEntity", name, position, speed);
     let entity = entities[name];
     if (!entity) {
         console.error("No es troba la entitat: ", entity);
@@ -32,5 +33,6 @@ export function getEntity(name, position, speed) {
     entity.position = position;
     entity.speed = speed;
 
+    console.log(name, position, speed, entity);
     return entity;
 }
