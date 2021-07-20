@@ -85,11 +85,8 @@ let strategies = {
         this.extra.age++;
         this.position.x += this.speed.x;
         this.position.y += this.speed.y;
-
     }
-
 };
-
 
 export function getStrategy(strategy) {
     return strategies[strategy];

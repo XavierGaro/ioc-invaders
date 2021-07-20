@@ -3,7 +3,6 @@ import {getEntity} from "./entityRepository.js";
 import * as assetManager from "./assetManager.js";
 
 export class Background {
-
     layers = {};
     gameContext = null;
 
@@ -22,7 +21,6 @@ export class Background {
         if (layer.position.y < -layer.image.height || layer.position.y > layer.image.height) {
             layer.position.y = 0;
         }
-
     }
 
     render(layer) {
@@ -36,14 +34,12 @@ export class Background {
             layer.position.y, layer.image.width, layer.image.height);
     }
 
-
     update() {
         for (let i = 0; i < this.layers.length; i++) {
             this.move(this.layers[i]);
             this.render(this.layers[i]);
         }
     };
-
 
     start(data) {
         this.layers = data.layers;
@@ -53,12 +49,9 @@ export class Background {
             this.layers[i].position = {x: 0, y: 0}
         }
     };
-
-
 }
 
 export class Sprite {
-
     frameIndex = 0;
     ticksPerFrame = 0;
     numberOfFrames = 1;
@@ -67,7 +60,6 @@ export class Sprite {
     height = 0;
     loop = true;
     tickCount = 0;
-    lastTick = 0;
     position = {x: 0, y: 0};
     size = {width: 0, height: 0};
     isDone = false;
@@ -85,22 +77,10 @@ export class Sprite {
 
         this.position = options.position || {x: 0, y: 0};
         this.size = {width: this.width / this.numberOfFrames, height: this.height};
-
-
     }
 
-    update(gametime) {
-
-        // ALERTA! Aqui no tenim accéss al updatedSprites! això sembla innecessari
-        // per alguna rao es dibuixaban mmés d'una vegada??
-        // if (updatedSprites.includes(this)) {
-        //     return;
-        // } else {
-        //     updatedSprites.push(this);
-        // }
-
+    update() {
         this.tickCount++;
-        this.lastTick = gametime;
 
         if (this.tickCount > this.ticksPerFrame) {
             this.tickCount = 0;
@@ -115,7 +95,6 @@ export class Sprite {
     };
 
     render() {
-
         if (this.isDone) {
             return;
         }
@@ -131,11 +110,9 @@ export class Sprite {
             this.width / this.numberOfFrames,
             this.height);
     };
-
 }
 
 class GameObject {
-
     alive = false;
     type = null;
     position = null;
@@ -145,7 +122,6 @@ class GameObject {
     constructor(options) {
         // aqui no fem res amb les opcions
     }
-
 
     updateSprite() {
         this.sprite.position = this.position;
@@ -157,24 +133,22 @@ class GameObject {
     };
 
     start(data) {
-        console.error("Error. Aquest mètode no està implementat");
+        console.error("Error: start. Aquest mètode no està implementat", this);
         return this;
     };
 
     update() {
-        console.error("Error. Aquest mètode no està implementat");
+        console.error("Error: update. Aquest mètode no està implementat", this);
     };
 
-    clear = function () {
-        console.error("Error. Aquest mètode no està implementat");
+    clear() {
+        console.error("Error: clear. Aquest mètode no està implementat", this);
     };
-
 }
 
 const MAX_TIME_OUTSIDE_BOUNDARIES = 180;// nombre de frames fora de la pantalla avans de esborrar-lo. a 60 FPS això equival a 3s
 
 class MovingGameObject extends GameObject {
-
     isDestroyed = false;
     speed = null;
     outsideBoundariesTime = 0;
@@ -192,8 +166,7 @@ class MovingGameObject extends GameObject {
         console.error("Error. Aquest mètode no està implementat");
     };
 
-    // TODO: Renombrar a isOutsideBoundaries?
-    checkBoundaries() {
+    isOutsideBoundaries() {
         if (this.position.x >= this.gameWidth
             || this.position.x <= -this.sprite.size.width
             || this.position.y > this.gameWidth
@@ -215,11 +188,6 @@ class MovingGameObject extends GameObject {
 }
 
 export class Explosion extends GameObject {
-
-    constructor(options) {
-        super(options);
-    }
-
 
     start(data) {
         this.alive = true;
@@ -248,10 +216,6 @@ export class Explosion extends GameObject {
 }
 
 export class Shot extends MovingGameObject {
-
-    constructor(options) {
-        super(options);
-    }
 
     start = function (data) {
         this.alive = true;
@@ -286,7 +250,6 @@ export class Shot extends MovingGameObject {
         // Dades i Funcions especifiques de cada tipus de enemic
         this.extra = {};
         this.move = null;
-
     };
 
     update = function () {
@@ -305,7 +268,6 @@ export class Shot extends MovingGameObject {
 
         this.render();
     };
-
 }
 
 export class Spaceship extends MovingGameObject {
@@ -339,7 +301,6 @@ export class Spaceship extends MovingGameObject {
             this.bulletPool.instantiate(cannon.bullet, origin, cannon.direction);
         }
     };
-
 
     start(data) {
         this.alive = true;
@@ -389,19 +350,17 @@ export class Spaceship extends MovingGameObject {
             return true;
         }
 
-
         this.updateSprite();
 
         this.move();
         this.fire();
 
-        if (this.checkBoundaries()) {
+        if (this.isOutsideBoundaries()) {
             return true;
         }
 
         this.render();
     };
-
 }
 
 export class Player extends Spaceship {
@@ -410,7 +369,6 @@ export class Player extends Spaceship {
         super(options);
         this.start(getEntity('player', options.position, options.speed));
     }
-
 
     getInput() {
 
@@ -436,7 +394,6 @@ export class Player extends Spaceship {
         // S'evita que surti de la pantalla
         this.position.x = this.position.x.clamp(0, this.gameWidth - this.sprite.size.width);
         this.position.y = this.position.y.clamp(0, this.gameHeight - this.sprite.size.height);
-
     }
 
     updateCannon() {
@@ -447,7 +404,6 @@ export class Player extends Spaceship {
             this.cannon[i].lastShot++;
         }
     }
-
 
     shoot(cannon) {
         let origin;

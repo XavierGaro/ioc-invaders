@@ -13,7 +13,6 @@ export class GameObjectPool {
         for (let i = 0; i < this.size; i++) {
             this.pool[i] = new generator(config);
         }
-
     }
 
     disable(index) {
@@ -27,31 +26,11 @@ export class GameObjectPool {
         return instance;
     };
 
-
-// function disable(index) {
-//     that.pool[index].clear();
-//     that.pool.push((that.pool.splice(index, 1))[0]);
-// }
-
-// that.actives = size;
-//
-// that.pool = [];
-//
-// for (let i = 0; i < size; i++) {
-//     that.pool[i] = generator(config);
-// }
-//
-// that.instantiate = function (type, position, speed) {
-//     let instance = that.pool[size - 1].start(getEntity(type, position, speed));
-//     that.pool.unshift(that.pool.pop());
-//     return instance;
-// };
-
-    update(gametime) {
+    update() {
         for (let i = 0; i < this.size; i++) {
             // Només dibuixiem fins que trobem un objecte que no sigui viu
             if (this.pool[i].alive) {
-                if (this.pool[i].update(gametime)) {
+                if (this.pool[i].update()) {
                     // Si update ha retornat cert es que s'ha de desactivar
                     this.disable(i);
                 }
@@ -68,5 +47,4 @@ export class GameObjectPool {
         }
         this.actives = 0;
     };
-
 }

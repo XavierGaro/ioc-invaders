@@ -37,7 +37,7 @@ function generateSprites(gameContext) {
         poolSize = 10;
 
         for (let j = 0; j < poolSize; j++) {
-            pool.push(new Sprite(gameContext,{
+            pool.push(new Sprite(gameContext, {
                     image: getImage(queue.sprites[i].id),
                     numberOfFrames: queue.sprites[i].numberOfFrames,
                     ticksPerFrame: queue.sprites[i].ticksPerFrame,
@@ -66,7 +66,6 @@ function generateSounds() {
             pool: pool,
             volume: queue.sounds[i].volume,
         }
-
     }
 }
 
@@ -161,7 +160,6 @@ export function fadeOutAudio(timeBeforeFadeOut) {
     } else {
         _fadeOutAudio();
     }
-
 }
 
 export function fadeInAudio() {
@@ -176,7 +174,6 @@ export function fadeInAudio() {
 }
 
 function clearIntervals() {
-    // clearInterval(timeIntervals.fadeInAudio);
     clearInterval(timeIntervals.fadeOutAudio);
 }
 
@@ -198,5 +195,4 @@ export function resetMusic(id) {
     if (cache.music[id].currentTime > 0) {
         cache.music[id].currentTime = 0;
     }
-
 }

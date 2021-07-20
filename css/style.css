@@ -87,6 +87,16 @@ a {
     font-family: 'Exo', sans-serif;
 }
 
+#loading-info {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    color: #FFF;
+    cursor: default;
+    text-align: left;
+    font-family: 'Exo', sans-serif;
+}
+
 .score span, .distance span {
     float: right;
 }
@@ -131,7 +141,6 @@ a {
 .fadeable {
     -webkit-transition: opacity 3s ease-in-out;
     -moz-transition: opacity 3s ease-in-out;
-    -ms-transition: opacity 3s ease-in-out;
     -o-transition: opacity 3s ease-in-out;
     opacity: 0;
 }

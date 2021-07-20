@@ -10,10 +10,10 @@ const GameState = {
 };
 
 class UserInterface {
+
     scoreText = document.getElementById('score');
     distanceText = document.getElementById('distance');
     messageText = document.getElementById('messages');
-
     canvas = null;
 
     constructor(canvas) {
@@ -64,11 +64,9 @@ class UserInterface {
     fadeOut() {
         this.canvas.style.opacity = '0';
     }
-
 }
 
 export class GameEngine {
-    // that = {};
     levels = {};
 
     currentLevel = 0;
@@ -76,22 +74,15 @@ export class GameEngine {
     score = 0;
     distance = 0; // Relativa al nivell actual
     nextWave = null; // Relativa al nivell actual
-
     enemyPool = null;
     enemyShotPool = null;
     playerShotPool = null;
     explosionPool = null;
-
     background = null;
-
     player = null;
-
     state = null;
-
     canvas = null;
     ui = null;
-
-    updatedSprites = [];
 
     constructor(config, canvas) {
         this.config = config;
@@ -100,7 +91,6 @@ export class GameEngine {
     }
 
     initEnvironment(data) {
-
         this.gameContext = this.canvas.getContext("2d");
 
         this.explosionPool = new GameObjectPool(100, Explosion);
@@ -128,8 +118,6 @@ export class GameEngine {
     update() {
         window.requestAnimationFrame(this.update.bind(this));
 
-        this.updatedSprites = [];
-
         this.updateWaves();
         this.detectCollisions();
 
@@ -154,8 +142,6 @@ export class GameEngine {
         this.explosionPool.update();
 
         this.ui.update(this.score, this.distance);
-
-
     }
 
     detectCollisions() {
@@ -165,35 +151,27 @@ export class GameEngine {
         // bala del jugador amb enemic
         impactInfo = this.detectCollisionsPoolWithPool(this.playerShotPool, this.enemyPool);
 
-        // if (impactInfo.length > 0) {
         for (i = 0; i < impactInfo.length; i++) {
             impactInfo[i].source.isDestroyed = true;
             impactInfo[i].target.isDestroyed = true;
             this.score += impactInfo[i].target.points;
         }
-        // }
 
         // bala del enemic amb jugador
         impactInfo = this.detectCollisionsPoolWithGameObject(this.enemyShotPool, this.player);
 
-        // if (impactInfo.length > 0) {
         for (i = 0; i < impactInfo.length; i++) {
             impactInfo[i].source.isDestroyed = true;
             impactInfo[i].target.isDestroyed = true;
 
         }
-        // }
 
         // enemic amb jugador
         impactInfo = this.detectCollisionsPoolWithGameObject(this.enemyPool, this.player);
-        // if (impactInfo.length > 0) {
         for (i = 0; i < impactInfo.length; i++) {
             impactInfo[i].source.isDestroyed = true;
             impactInfo[i].target.isDestroyed = true;
         }
-        // }
-
-
     }
 
     detectCollisionsPoolWithPool(poolA, poolB) {
@@ -239,7 +217,7 @@ export class GameEngine {
         let waves = this.levels[this.currentLevel].waves,
             currentWave;
 
-        if (this.nextWave < waves.length && distance >= waves[this.nextWave].distance) {
+        if (this.nextWave < waves.length && this.distance >= waves[this.nextWave].distance) {
             currentWave = waves[this.nextWave];
             this.spawner(currentWave.spawns);
             this.nextWave++;
@@ -342,11 +320,9 @@ export class GameEngine {
             default:
                 console.log("Error, no es reconeix el tipus de formació");
         }
-
     }
 
     setEndLevel() {
-
         this.currentLevel++;
 
         if (this.currentLevel >= this.levels.length) {
@@ -372,7 +348,6 @@ export class GameEngine {
         this.ui.fadeOut();
         assetManager.fadeOutAudio(2000); // Donem temps per que es produeixi la explosió
 
-        let context = this;
         setTimeout(function () {
             assetManager.getMusic("game-over");
         }, 2000);
@@ -406,7 +381,6 @@ export class GameEngine {
         assetManager.downloadAll(this.loadEntititesData.bind(this), this.gameContext);
     };
 
-
     loadEntititesData() {
         let context = this;
 
@@ -417,27 +391,22 @@ export class GameEngine {
     };
 
     loadLevelsData() {
-        console.log("Loading level");
         let context = this;
 
         this.loadData(this.config.levels_data_url, function (data) {
             context.levels = data.levels;
-            console.log("Level loaded");
             context.start();
         });
     };
 
     start() {
-
         this.background = new Background(this.gameContext);
 
         this.restart();
         this.update();
-
     };
 
     startLevel(level) {
-        console.log("Start Level");
         let message = this.levels[level].name
             + "<p><span>"
             + this.levels[level].description
@@ -454,10 +423,7 @@ export class GameEngine {
         this.player.position = {x: 10, y: 256};
     };
 
-
     restart() {
-
-        console.log("Restart");
         this.ui.hideGameOver();
         assetManager.fadeInAudio();
 
@@ -473,8 +439,6 @@ export class GameEngine {
                 gameHeight: this.canvas.height
             });
 
-        console.log("Player?", this.player);
-
         this.currentLevel = 0;
         this.score = 0;
         this.state = GameState.RUNNING;
@@ -489,5 +453,4 @@ export class GameEngine {
         this.ui.fadeIn();
         this.startLevel(this.currentLevel);
     };
-
 }
