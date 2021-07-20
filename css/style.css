@@ -124,6 +124,10 @@ a {
     color: #FFD700;
 }
 
+#start.game-over {
+    display: block;
+}
+
 .fadeable {
     -webkit-transition: opacity 3s ease-in-out;
     -moz-transition: opacity 3s ease-in-out;

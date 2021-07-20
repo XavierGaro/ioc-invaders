@@ -131,22 +131,22 @@
     "sounds": [
       {
         "id": "shoot",
-        "path": "assets/sounds/shoot.mp3",
+        "path": "assets/sounds/shoot.wav",
         "volume": 0.15
       },
       {
         "id": "laser",
-        "path": "assets/sounds/laser.mp3",
+        "path": "assets/sounds/laser.wav",
         "volume": 0.15
       },
       {
         "id": "player_explosion",
-        "path": "assets/sounds/large_explosion.mp3",
+        "path": "assets/sounds/large_explosion.wav",
         "volume": 0.35
       },
       {
         "id": "enemy_explosion",
-        "path": "assets/sounds/explosion.mp3",
+        "path": "assets/sounds/explosion.wav",
         "volume": 0.25
       }
     ],
@@ -159,7 +159,7 @@
       },
       {
         "id": "game-over",
-        "path": "assets/sounds/game-over.mp3",
+        "path": "assets/sounds/game-over.wav",
         "loop": false,
         "volume": 1
       },
