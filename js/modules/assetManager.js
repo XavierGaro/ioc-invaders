@@ -2,7 +2,9 @@ import {Sprite} from "./gameObjects.js";
 
 let successCount = 0,
     errorCount = 0,
-    queue = {
+    currentTrack;
+
+const queue = {
         images: [],
         sprites: [],
         sounds: [],
@@ -15,7 +17,6 @@ let successCount = 0,
         music: {}
     },
     timeIntervals = {},
-    currentSong,
     subscribers = new Set();
 
 export function subscribe(func) {
@@ -23,7 +24,7 @@ export function subscribe(func) {
 }
 
 function updateProgress() {
-    for (let func of subscribers) {
+    for (const func of subscribers) {
         func(successCount + errorCount, queue.images.length);
     }
 }
@@ -56,11 +57,13 @@ function generateSounds() {
     for (let i = 0; i < queue.sounds.length; i++) {
         pool = [];
         poolSize = 10; // nombre màxim de sons identics que es reprodueixen al mateix temps
+
         for (let j = 0; j < poolSize; j++) {
             sound = new Audio(queue.sounds[i].path);
             sound.volume = queue.sounds[i].volume;
             pool.push(sound);
         }
+
         cache.sounds[queue.sounds[i].id] = {
             currentSound: 0,
             pool: pool,
@@ -96,7 +99,6 @@ export function queueAsset(type, asset) {
 }
 
 export function downloadAll(callback, gameContext, args) {
-
     if (queue.images.length === 0) {
         callback();
     }
@@ -130,11 +132,9 @@ export function downloadAll(callback, gameContext, args) {
     generateMusic();
 }
 
-
 export function getImage(id) {
     return cache.images[id];
 }
-
 
 export function getSprite(id) {
     let pool = cache.sprites[id];
@@ -155,6 +155,7 @@ export function getSound(id) {
 
 export function fadeOutAudio(timeBeforeFadeOut) {
     clearIntervals();
+
     if (timeBeforeFadeOut) {
         timeIntervals.fadeOutAudio = setTimeout(fadeOutAudio, timeBeforeFadeOut);
     } else {
@@ -178,9 +179,9 @@ function clearIntervals() {
 }
 
 export function getMusic(id) {
-    resetMusic(currentSong);
+    resetMusic(currentTrack);
     cache.music[id].play();
-    currentSong = id;
+    currentTrack = id;
 }
 
 export function resetMusic(id) {

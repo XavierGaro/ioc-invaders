@@ -26,11 +26,11 @@ export class GameObjectPool {
         return instance;
     };
 
-    update() {
+    update(deltaTime) {
         for (let i = 0; i < this.size; i++) {
-            // Només dibuixiem fins que trobem un objecte que no sigui viu
+            // Només dibuixem fins que trobem un objecte que no sigui viu
             if (this.pool[i].alive) {
-                if (this.pool[i].update()) {
+                if (this.pool[i].update(deltaTime)) {
                     // Si update ha retornat cert es que s'ha de desactivar
                     this.disable(i);
                 }

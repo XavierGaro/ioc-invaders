@@ -2,35 +2,35 @@
   "levels": [
     {
       "name": "Nivell 1",
-      "description": "Aquest es el primer nivell del joc.<br>Fes servir els cursors per moure't i espai per disparar.",
+      "description": "Aquest es el primer nivell del joc.<br>Fes servir les fletxes per moure't i espai per disparar.",
       "music": "defense-line",
       "background": {
         "layers": [
           {
             "id": "bg_layer_1",
             "speed": {
-              "x": -1,
+              "x": -60,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2",
             "speed": {
-              "x": -2,
+              "x": -120,
               "y": 0
             }
           },
           {
             "id": "bg_layer_3",
             "speed": {
-              "x": -4,
+              "x": -240,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4",
             "speed": {
-              "x": -8,
+              "x": -480,
               "y": 0
             }
           }
@@ -53,7 +53,7 @@
                 "y": 81
               },
               "speed": {
-                "x": -1.5,
+                "x": -90,
                 "y": 0
               }
             },
@@ -69,7 +69,7 @@
                 "y": 350
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -91,7 +91,7 @@
                 "y": 30
               },
               "speed": {
-                "x": -1.5,
+                "x": -90,
                 "y": 0
               }
             },
@@ -107,7 +107,7 @@
                 "y": 250
               },
               "speed": {
-                "x": -3,
+                "x": -180,
                 "y": 0
               }
             }
@@ -128,7 +128,7 @@
                 "y": 30
               },
               "speed": {
-                "x": -5,
+                "x": -300,
                 "y": 0
               }
             }
@@ -149,7 +149,7 @@
                 "y": 300
               },
               "speed": {
-                "x": -5,
+                "x": -300,
                 "y": 0
               }
             }
@@ -170,7 +170,7 @@
                 "y": 240
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -191,7 +191,7 @@
                 "y": 140
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -212,7 +212,7 @@
                 "y": 340
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -233,21 +233,21 @@
           {
             "id": "bg_layer_1_green",
             "speed": {
-              "x": -1,
+              "x": -60,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2_green",
             "speed": {
-              "x": -4,
+              "x": -240,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4_green",
             "speed": {
-              "x": -8,
+              "x": -480,
               "y": 0
             }
           }
@@ -270,7 +270,7 @@
                 "y": 81
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -292,28 +292,28 @@
           {
             "id": "bg_layer_1",
             "speed": {
-              "x": -1,
+              "x": -60,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2_green",
             "speed": {
-              "x": -2,
+              "x": -120,
               "y": 0
             }
           },
           {
             "id": "bg_layer_3",
             "speed": {
-              "x": -4,
+              "x": -240,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4_green",
             "speed": {
-              "x": -8,
+              "x": -480,
               "y": 0
             }
           }
@@ -336,7 +336,7 @@
                 "y": 81
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }

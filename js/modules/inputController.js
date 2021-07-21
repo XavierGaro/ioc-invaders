@@ -14,6 +14,7 @@ for (let code in KEY_CODES) {
 
 function getCode(event) {
     let code;
+
     if (event.code !== undefined) {
         code = event.code;
     } else if (event.keyIdentifier !== undefined) {

@@ -76,7 +76,7 @@ a {
     top: 0;
 }
 
-.score, .distance {
+.score, .distance, .fpsCounter {
     position: absolute;
     top: 5px;
     left: 5px;
@@ -97,13 +97,17 @@ a {
     font-family: 'Exo', sans-serif;
 }
 
-.score span, .distance span {
+.score span, .distance span, .fpsCounter span{
     float: right;
 }
 
 .distance {
     top: 20px;
 }
+.fpsCounter {
+    top: 40px;
+}
+
 
 .game-over, .messages {
     position: absolute;

@@ -14,15 +14,17 @@ class UserInterface {
     scoreText = document.getElementById('score');
     distanceText = document.getElementById('distance');
     messageText = document.getElementById('messages');
+    fpsText = document.getElementById('fps');
     canvas = null;
 
     constructor(canvas) {
         this.canvas = canvas;
     }
 
-    update(score, distance) {
+    update(score, distance, fps) {
         this.scoreText.innerHTML = score;
         this.distanceText.innerHTML = distance;
+        this.fpsText.innerHTML = fps;
     }
 
     showMessage(message, duration) { // Temps en milisegons
@@ -66,6 +68,8 @@ class UserInterface {
     }
 }
 
+const FPS = 60;
+
 export class GameEngine {
     levels = {};
 
@@ -84,10 +88,18 @@ export class GameEngine {
     canvas = null;
     ui = null;
 
+    // Gestió dels quadres per segon
+    fpsInterval = 0;
+    then = 0;
+    startTime = 0;
+    currentFPS = 0;
+    previousGameTime = 0;
+
     constructor(config, canvas) {
         this.config = config;
         this.canvas = canvas;
         this.ui = new UserInterface(canvas);
+        this.previousGameTime = 0;
     }
 
     initEnvironment(data) {
@@ -115,33 +127,56 @@ export class GameEngine {
         this.loadAssets(data.assets);
     }
 
-    update() {
+    isUpdateRequired(gameTime) {
+        this.now = gameTime;
+        let elapsed = this.now - this.then;
+
+        // Si ha passat suficient temps dibuixem el següent quadre
+        if (elapsed >= this.fpsInterval) {
+            this.then = this.now - (elapsed % this.fpsInterval);
+            let sinceStart = this.now - this.startTime;
+            this.currentFPS = Math.round(1000 / (sinceStart / ++this.frameCount));
+            return true;
+        }
+
+        return false;
+    }
+
+    update(gameTime) {
         window.requestAnimationFrame(this.update.bind(this));
+
+        // Comprovem si ha passat suficient temps entre actualitzacions per limitar el nombre de
+        // quadres per segon
+        if (!this.isUpdateRequired(gameTime)) {
+            return;
+        }
+
+        // Diferencia de temps entre quadres en ms
+        let deltaTime = (gameTime - this.previousGameTime)/1000;
+        this.previousGameTime = gameTime;
 
         this.updateWaves();
         this.detectCollisions();
 
-        this.background.update();
-        this.enemyPool.update();
-        this.enemyShotPool.update();
-        this.playerShotPool.update();
+        this.background.update(deltaTime);
+        this.enemyPool.update(deltaTime);
+        this.enemyShotPool.update(deltaTime);
+        this.playerShotPool.update(deltaTime);
 
         if (this.player.isDestroyed && this.state !== GameState.GAME_OVER) {
             this.setGameOver();
 
         } else if (this.enemyPool.actives === 0 && this.levelEnded && this.state !== GameState.GAME_OVER
             && this.state !== GameState.LOADING_NEXT_LEVEL) {
-
             this.ui.transitionScreen(this.setEndLevel.bind(this))
             this.state = GameState.LOADING_NEXT_LEVEL;
         } else if (this.state !== GameState.GAME_OVER) {
-            this.player.update();
+            this.player.update(deltaTime);
             this.distance++;
         }
 
-        this.explosionPool.update();
-
-        this.ui.update(this.score, this.distance);
+        this.explosionPool.update(deltaTime);
+        this.ui.update(this.score, this.distance, this.currentFPS);
     }
 
     detectCollisions() {
@@ -150,7 +185,6 @@ export class GameEngine {
 
         // bala del jugador amb enemic
         impactInfo = this.detectCollisionsPoolWithPool(this.playerShotPool, this.enemyPool);
-
         for (i = 0; i < impactInfo.length; i++) {
             impactInfo[i].source.isDestroyed = true;
             impactInfo[i].target.isDestroyed = true;
@@ -159,11 +193,9 @@ export class GameEngine {
 
         // bala del enemic amb jugador
         impactInfo = this.detectCollisionsPoolWithGameObject(this.enemyShotPool, this.player);
-
         for (i = 0; i < impactInfo.length; i++) {
             impactInfo[i].source.isDestroyed = true;
             impactInfo[i].target.isDestroyed = true;
-
         }
 
         // enemic amb jugador
@@ -252,7 +284,6 @@ export class GameEngine {
 
         switch (wave.formation.type) {
             case "columns":
-
                 originPosition = {x: wave.position.x, y: wave.position.y};
                 spacer = wave.formation.spacer;
                 nextColumn = originPosition.y + wave.formation.column_height;
@@ -401,16 +432,18 @@ export class GameEngine {
 
     start() {
         this.background = new Background(this.gameContext);
-
         this.restart();
+        this.fpsInterval = 1000 / FPS;
+        this.then = window.performance.now();
+        this.startTime = this.then;
+        this.frameCount = 0;
+
         this.update();
     };
 
     startLevel(level) {
-        let message = this.levels[level].name
-            + "<p><span>"
-            + this.levels[level].description
-            + "</span></p>";
+
+        let message = `${this.levels[level].name}<p><span>${this.levels[level].description}</span></p>`;
         this.ui.showMessage(message, 3000);
 
         this.background.start(this.levels[level].background);
@@ -434,7 +467,7 @@ export class GameEngine {
                     explosion: this.explosionPool
                 },
                 position: {x: 10, y: 256},
-                speed: {x: 4, y: 4},
+                speed: {x: 240, y: 240},
                 gameWidth: this.canvas.width,
                 gameHeight: this.canvas.height
             });

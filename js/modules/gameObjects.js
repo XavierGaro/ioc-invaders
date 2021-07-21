@@ -10,9 +10,9 @@ export class Background {
         this.gameContext = gameContext;
     }
 
-    move(layer) {
-        layer.position.x += layer.speed.x;
-        layer.position.y += layer.speed.y;
+    move(layer, deltaTime) {
+        layer.position.x += layer.speed.x * deltaTime;
+        layer.position.y += layer.speed.y * deltaTime;
 
         if (layer.position.x < -layer.image.width || layer.position.x > layer.image.width) {
             layer.position.x = 0;
@@ -34,9 +34,9 @@ export class Background {
             layer.position.y, layer.image.width, layer.image.height);
     }
 
-    update() {
+    update(deltaTime) {
         for (let i = 0; i < this.layers.length; i++) {
-            this.move(this.layers[i]);
+            this.move(this.layers[i], deltaTime);
             this.render(this.layers[i]);
         }
     };
@@ -137,7 +137,7 @@ class GameObject {
         return this;
     };
 
-    update() {
+    update(deltaTime) {
         console.error("Error: update. Aquest mètode no està implementat", this);
     };
 
@@ -162,8 +162,8 @@ class MovingGameObject extends GameObject {
         this.gameHeight = options.gameHeight;
     }
 
-    move() {
-        console.error("Error. Aquest mètode no està implementat");
+    move(deltaTime) {
+        console.error("Error: move. Aquest mètode no està implementat");
     };
 
     isOutsideBoundaries() {
@@ -206,7 +206,7 @@ export class Explosion extends GameObject {
         this.sprite = null;
     };
 
-    update() {
+    update(deltaTime) {
         if (this.sprite.isDone) {
             return true;
         }
@@ -217,15 +217,13 @@ export class Explosion extends GameObject {
 
 export class Shot extends MovingGameObject {
 
-    start = function (data) {
+    start(data) {
         this.alive = true;
 
         this.type = data.type;
         this.position = data.position;
         this.sprite = assetManager.getSprite(data.sprite);
-
         assetManager.getSound(data.sound);
-
         this.speed = data.speed;
 
         // Dades i Funcions especifiques de cada tipus de enemic
@@ -236,7 +234,7 @@ export class Shot extends MovingGameObject {
         return this;
     };
 
-    clear = function () {
+    clear() {
         this.isDestroyed = false;
         this.alive = false;
         this.outsideBoundariesTime = 0;
@@ -252,17 +250,16 @@ export class Shot extends MovingGameObject {
         this.move = null;
     };
 
-    update = function () {
-
+    update(deltaTime) {
         if (this.isDestroyed) {
             return true;
         }
 
         this.updateSprite();
 
-        this.move();
+        this.move(deltaTime);
 
-        if (this.checkBoundaries()) {
+        if (this.isOutsideBoundaries()) {
             return true;
         }
 
@@ -343,16 +340,14 @@ export class Spaceship extends MovingGameObject {
         this.outsideBoundariesTime = 0;
     };
 
-    update() {
-
+    update(deltaTime) {
         if (this.isDestroyed) {
             this.explosionPool.instantiate(this.explosion, this.position);
             return true;
         }
 
         this.updateSprite();
-
-        this.move();
+        this.move(deltaTime);
         this.fire();
 
         if (this.isOutsideBoundaries()) {
@@ -370,21 +365,21 @@ export class Player extends Spaceship {
         this.start(getEntity('player', options.position, options.speed));
     }
 
-    getInput() {
+    getInput(deltaTime) {
 
         if (KEY_STATUS.ArrowLeft) {
-            this.position.x -= this.speed.x;
+            this.position.x -= this.speed.x * deltaTime;
 
         } else if (KEY_STATUS.ArrowRight) {
-            this.position.x += this.speed.x;
+            this.position.x += this.speed.x * deltaTime;
 
         }
 
         if (KEY_STATUS.ArrowUp) {
-            this.position.y -= this.speed.y;
+            this.position.y -= this.speed.y * deltaTime;
 
         } else if (KEY_STATUS.ArrowDown) {
-            this.position.y += this.speed.y;
+            this.position.y += this.speed.y * deltaTime;
         }
 
         if (KEY_STATUS.Space && !this.isDestroyed) {
@@ -414,7 +409,7 @@ export class Player extends Spaceship {
         }
     };
 
-    update() {
+    update(deltaTime) {
         this.updateCannon();
 
         // Si ha sigut impactat, s'elimina. Aquí també es podria afegir la animació de la explosió
@@ -423,7 +418,7 @@ export class Player extends Spaceship {
             return true;
         }
 
-        this.getInput();
+        this.getInput(deltaTime);
         this.updateSprite();
         this.render();
     };

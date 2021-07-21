@@ -1,5 +1,5 @@
-import {GameEngine} from "./modules/gameEngine.js";
-import * as assetManager from "./modules/assetManager.js"
+import {GameEngine} from "./gameEngine.js";
+import * as assetManager from "./assetManager.js"
 
 /**
  * Aquesta utilitat afegeix el mètode clamp a la prototip Number. El que fa es afegir el métode clamp a tots els
@@ -14,7 +14,6 @@ Number.prototype.clamp = function (min, max) {
     return Math.min(Math.max(this, min), max);
 };
 
-
 let gameCanvas,
     config,
     gameEngine;
@@ -24,9 +23,8 @@ export function start(conf, canvas) {
     gameCanvas = canvas;
     gameEngine = new GameEngine(conf, canvas);
 
-    assetManager.subscribe(function (current, total) {
+    assetManager.subscribe((current, total) => {
         let node = document.getElementById('loading-info');
-
         node.innerHTML = `RECURSOS CARREGATS: ${current}/${total}`;
     });
 
@@ -45,21 +43,20 @@ window.onload = function () {
         '<canvas id="game-canvas" width="1024" height="512" class="fadeable">' +
         'El teu navegador no admet canvas. Si us plau, prova amb un altre navegador.' +
         '</canvas>' +
-        '<div class="ui">' +
-        '   <div class="score">SCORE: <span id="score"></span></div>' +
-        '   <div class="distance">DISTANCE: <span id="distance"></span></div>' +
-        '</div>' +
+        '<ul class="ui">' +
+        '   <li class="score">PUNTUACIÓ: <span id="score">0</span></li>' +
+        '   <li class="distance">DISTÀNCIA: <span id="distance">0</span></li>' +
+        '   <li class="fpsCounter">FPS: <span id="fps">0</span></li>' +
+        '</ul>' +
         '<div class="game-over" id="game-over">GAME OVER<p><span>TORNAR A JUGAR</span></p></div>' +
         '<div class="game-over" id="start">PREM JUGAR PER COMENÇAR<p><span>JUGAR</span></p></div>' +
         '<div class="messages fadeable" id="messages"></div>' +
         '<div id="loading-info"> </div>';
 
-
     document.getElementById('game-over').addEventListener('click', restart);
 
     let startNode = document.getElementById('start');
-    startNode.addEventListener('click', function () {
-
+    startNode.addEventListener('click', ()  => {
         startNode.remove();
         canvas = document.getElementById('game-canvas');
         start({
