@@ -76,7 +76,7 @@ a {
     top: 0;
 }
 
-.score, .distance {
+.score, .distance, .fpsCounter {
     position: absolute;
     top: 5px;
     left: 5px;
@@ -87,13 +87,27 @@ a {
     font-family: 'Exo', sans-serif;
 }
 
-.score span, .distance span {
+#loading-info {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    color: #FFF;
+    cursor: default;
+    text-align: left;
+    font-family: 'Exo', sans-serif;
+}
+
+.score span, .distance span, .fpsCounter span{
     float: right;
 }
 
 .distance {
     top: 20px;
 }
+.fpsCounter {
+    top: 40px;
+}
+
 
 .game-over, .messages {
     position: absolute;
@@ -124,10 +138,13 @@ a {
     color: #FFD700;
 }
 
+#start.game-over {
+    display: block;
+}
+
 .fadeable {
     -webkit-transition: opacity 3s ease-in-out;
     -moz-transition: opacity 3s ease-in-out;
-    -ms-transition: opacity 3s ease-in-out;
     -o-transition: opacity 3s ease-in-out;
     opacity: 0;
 }

@@ -2,35 +2,35 @@
   "levels": [
     {
       "name": "Nivell 1",
-      "description": "Aquest es el primer nivell del joc.<br>Fes servir els cursors per moure't i espai per disparar.",
+      "description": "Aquest es el primer nivell del joc.<br>Fes servir les fletxes per moure't i espai per disparar.",
       "music": "defense-line",
       "background": {
         "layers": [
           {
             "id": "bg_layer_1",
             "speed": {
-              "x": -1,
+              "x": -60,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2",
             "speed": {
-              "x": -2,
+              "x": -120,
               "y": 0
             }
           },
           {
             "id": "bg_layer_3",
             "speed": {
-              "x": -4,
+              "x": -240,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4",
             "speed": {
-              "x": -8,
+              "x": -480,
               "y": 0
             }
           }
@@ -52,7 +52,7 @@
                 "y": 81
               },
               "speed": {
-                "x": -1.5,
+                "x": -90,
                 "y": 0
               }
             },
@@ -68,7 +68,7 @@
                 "y": 350
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -90,7 +90,7 @@
                 "y": 30
               },
               "speed": {
-                "x": -1.5,
+                "x": -90,
                 "y": 0
               }
             },
@@ -106,7 +106,7 @@
                 "y": 250
               },
               "speed": {
-                "x": -3,
+                "x": -180,
                 "y": 0
               }
             }
@@ -127,7 +127,7 @@
                 "y": 30
               },
               "speed": {
-                "x": -5,
+                "x": -300,
                 "y": 0
               }
             }
@@ -148,7 +148,7 @@
                 "y": 300
               },
               "speed": {
-                "x": -5,
+                "x": -300,
                 "y": 0
               }
             }
@@ -169,7 +169,7 @@
                 "y": 240
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -190,7 +190,7 @@
                 "y": 140
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -211,7 +211,7 @@
                 "y": 340
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -229,21 +229,21 @@
           {
             "id": "bg_layer_1_green",
             "speed": {
-              "x": -1,
+              "x": -60,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2_green",
             "speed": {
-              "x": -4,
+              "x": -240,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4_green",
             "speed": {
-              "x": -8,
+              "x": -480,
               "y": 0
             }
           }
@@ -266,7 +266,7 @@
                 "y": 81
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -288,28 +288,28 @@
           {
             "id": "bg_layer_1",
             "speed": {
-              "x": -1,
+              "x": -60,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2_green",
             "speed": {
-              "x": -2,
+              "x": -120,
               "y": 0
             }
           },
           {
             "id": "bg_layer_3",
             "speed": {
-              "x": -4,
+              "x": -240,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4_green",
             "speed": {
-              "x": -8,
+              "x": -480,
               "y": 0
             }
           }
@@ -332,7 +332,7 @@
                 "y": 81
               },
               "speed": {
-                "x": -1,
+                "x": -60,
                 "y": 0
               }
             }
@@ -347,35 +347,35 @@
     },
     {
       "name": "Nivell 4",
-      "description": "Aquest es el quart nivell del joc.",
+      "description": "Aquest és el quart nivell del joc.",
       "music": "star-commander",
       "background": {
         "layers": [
           {
             "id": "bg_layer_1_green",
             "speed": {
-              "x": -2,
+              "x": -120,
               "y": 0
             }
           },
           {
             "id": "bg_layer_2",
             "speed": {
-              "x": -4,
+              "x": -240,
               "y": 0
             }
           },
           {
             "id": "bg_layer_3_green",
             "speed": {
-              "x": -8,
+              "x": -480,
               "y": 0
             }
           },
           {
             "id": "bg_layer_4",
             "speed": {
-              "x": -16,
+              "x": -960,
               "y": 0
             }
           }
@@ -397,17 +397,17 @@
                 "y": 100
               },
               "speed": {
-                "x": -2,
+                "x": -120,
                 "y": 0
               }
             }
           ]
         },
         {
-          "distance": 200,
+          "distance": 400,
           "spawns": [
             {
-              "type": "alien_a",
+              "type": "alien_b",
               "formation": {
                 "type": "column",
                 "amount": 5,
@@ -415,12 +415,12 @@
                 "spacer": 50
               },
               "position": {
-                "x": 1024,
-                "y": 0
+                "x": 800,
+                "y": -200
               },
               "speed": {
                 "x": 0,
-                "y": -2
+                "y": 120
               }
             }
           ]
