@@ -390,16 +390,13 @@ export class GameEngine {
     };
 
     loadData(url, callback) {
-        let httpRequest = new XMLHttpRequest();
 
-        httpRequest.open("GET", url, true);
-        httpRequest.overrideMimeType('text/plain');
-        httpRequest.send(null);
-
-        httpRequest.onload = function () {
-            let data = JSON.parse(httpRequest.responseText);
-            callback(data);
-        };
+        fetch(url)
+            .then(response => response.json())
+            .then(data => callback(data))
+            .catch(function (err) {
+                console.log("Something went wrong!", err);
+            });
     };
 
     loadAssets(assets) {

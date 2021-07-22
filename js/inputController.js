@@ -1,4 +1,4 @@
-export const KEY_CODES = {
+const KEY_CODES = {
     32: 'Space',
     37: 'ArrowLeft',
     38: 'ArrowUp',
